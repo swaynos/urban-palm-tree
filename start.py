@@ -9,15 +9,21 @@ from ScreenCaptureKit import (
 import Quartz.CoreGraphics as CG
 # https://github.com/ronaldoussoren/pyobjc/issues/590
 
-from AppKit import NSWorkspace, NSApplicationActivateIgnoringOtherApps
+from AppKit import NSWorkspace
+
+APP_NAME = "Google Chrome"
 
 # Get a list of all open windows
-windows = NSWorkspace.sharedWorkspace().runningApplications()
+apps = NSWorkspace.sharedWorkspace().runningApplications()
 
 # Iterate over the list of windows
-for window in windows:
-    # Do something with each application, such as print its name
-    print(window.localizedName())
+for app in apps:
+    if (app.localizedName().lower() == APP_NAME.lower()):
+        print(APP_NAME + " is active:" + str(app.isActive()))
+        
+        #screenshot = CG.CGWindow.imageOfWindow(app)
+
+        # Do something with each application, such as print its name
 
 # Get the window you want to capture
 #window = NSWindow(frame=CGRectMake(0, 0, 100, 100))
