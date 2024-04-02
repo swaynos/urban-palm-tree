@@ -6,7 +6,9 @@ from ScreenCaptureKit import (
     SCStreamConfiguration,
     SCShareableContent,
 )
+from Quartz import CGWindowListCopyWindowInfo, kCGNullWindowID, kCGWindowListOptionAll
 import Quartz.CoreGraphics as CG
+# TODO: Actually read this
 # https://github.com/ronaldoussoren/pyobjc/issues/590
 
 from AppKit import NSWorkspace
@@ -19,8 +21,15 @@ apps = NSWorkspace.sharedWorkspace().runningApplications()
 # Iterate over the list of windows
 for app in apps:
     if (app.localizedName().lower() == APP_NAME.lower()):
-        print(APP_NAME + " is active:" + str(app.isActive()))
-        
+        # active: Indicates whether the application is currently frontmost.
+        # hidden: Indicates whether the application is currently hidden.
+        print(APP_NAME + " is hidden : " + str(app.isHidden()))
+        if (not app.isHidden()):
+            pid = app.processIdentifier()
+            # TODO: Look at this first: https://www.sitepoint.com/quick-tip-controlling-macos-with-python/
+            # TODO: Go here and figure out what method to use: https://developer.apple.com/documentation/coregraphics/quartz_window_services?language=objc
+            window_info = CGWindowListCopyWindowInfo(pid, kCGNullWindowID, kCGWindowListOptionAll)
+            
         #screenshot = CG.CGWindow.imageOfWindow(app)
 
         # Do something with each application, such as print its name
