@@ -9,3 +9,5 @@ package-mode = false
 python = ">=3.11"
 pyobjc = "^10.2"
 pyobjc-framework-screencapturekit = "^10.2"
+pyscreenshot = "^3.1"
+pillow = "^10.3.0"
