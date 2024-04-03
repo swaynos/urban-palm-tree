@@ -1,6 +1,9 @@
-from AppKit import NSWorkspace, NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
+from AppKit import NSWindow, NSWorkspace, NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
 import pyscreenshot as ImageGrab
 import time
+import Quartz
+
+# TODO: Move definitions into other files
 
 def getApp(appName):
     """
@@ -18,10 +21,42 @@ def getApp(appName):
 
     # Iterate over the list of windows
     for app in apps:
+        # app.bundleIdentifier() can also be used
         if (app.localizedName().lower() == APP_NAME.lower()):
             _app = app
 
     return _app
+
+# window
+class Window:
+    def __init__(self):
+        self.Height = int(0)
+        self.Width = int(0)
+        self.X = int(0)
+        self.Y = int(0)
+def getWindow(pid):
+    # Retrieve window information
+    window_list = Quartz.CGWindowListCopyWindowInfo(
+        Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,
+        Quartz.kCGNullWindowID
+    )
+
+    matched_windows = []
+
+    # Iterate through the window list and filter by the app's PID
+    for window_info in window_list:
+        if window_info["kCGWindowOwnerPID"] == pid:
+            # Extract relevant window details (e.g., window ID, title, etc.)
+            window = Window()
+            window.Height = int(window_info["kCGWindowBounds"]["Height"])
+            window.Width = int(window_info["kCGWindowBounds"]["Width"])
+            window.X = int(window_info["kCGWindowBounds"]["X"])
+            window.Y = int(window_info["kCGWindowBounds"]["Y"])
+            matched_windows.append(window)
+
+    if (len(matched_windows) > 0):
+        # TODO: What if there is more than one window?
+        return matched_windows[0]
 
 # statistics
 class Statistics:
@@ -33,6 +68,7 @@ statistics = Statistics()
 # Begin Program
 APP_NAME = "Google Chrome"
 app = getApp(APP_NAME)
+pid = app.processIdentifier()
 
 # Loop
 while(app):
@@ -54,28 +90,20 @@ while(app):
             break
 
     print("Grabbing a screenshot")
-    im = ImageGrab.grab(backend="mac_screencapture") #, bbox =(0, 0, 300, 300))
+    window = getWindow(pid)
+    deltaX = window.X + window.Width
+    deltaY = window.Y + window.Height
+    im = ImageGrab.grab(
+        backend="mac_screencapture", 
+        bbox =(window.X, window.Y, deltaX, deltaY)
+    )
     """ 
     Performance (note, run in debug mode):
         backend="mac_screencapture"
         88 screenshots over 22.30443811416626s => 4 frames per second
+        With reduced screenshot size to just the window:
+        139 screenshots over 27.821112632751465 => 4.99 frames per second
         backend=default
         12 screenshots over 25.30296301841736s => .47 frames per second
     """
     statistics.count+=1
-        
-        
-# Notes
-# Create a content filter that includes only the specified window
-# content_filter = ScreenCaptureKit.SCContentFilter(display=None,
-#                         excludingApplications=[],
-#                         exceptingWindows=[])
-
-# for window in windows:
-
-
-
-# windowInfo = CGWindowListCopyWindowInfo(pid, Quartz.kCGNullWindowID, Quartz.kCGWindowListOptionAll)
-# TODO: Look at this first: https://www.sitepoint.com/quick-tip-controlling-macos-with-python/
-# TODO: Go here and figure out what method to use: https://developer.apple.com/documentation/coregraphics/quartz_window_services?language=objc
-# window_info = CGWindowListCopyWindowInfo(pid, kCGNullWindowID, kCGWindowListOptionAll)
