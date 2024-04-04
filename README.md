@@ -1,5 +1,40 @@
 # urban-palm-tree
 
+Automate gameplay on your PS5 by capturing the stream, analyzing frames, and making decisions based on game elements. This project leverages existing software to stream the PS5 feed to your computer and capture keyboard input to send back to the console.
+
+## Table of Contents
+- Installation
+- Usage
+- Contributing
+- License
+
+## Installation
+1. Clone the repository:
+    ```bash
+    git clone git@github.com:swaynos/urban-palm-tree.git
+    ```
+
+2. Install Python dependencies using Poetry:
+    ```bash
+    poetry install
+    ```
+
+## Usage
+- Run the project using the following command:
+    ```bash
+    poetry run python main.py
+    ```
+
+## Contributing
+1. Fork the repository.
+2. Create a new branch: `git checkout -b feature-name`.
+3. Make your changes.
+4. Push your branch: `git push origin feature-name`.
+5. Create a pull request.
+
+## License
+This project is licensed under the GNU General Public License v3.0
+
 ## Project Goals
 1. While in game, perform user input to keep the user from being kicked out as inactive
 2. While out of game, navigate the menu's to place the user back into a game
