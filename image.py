@@ -26,11 +26,41 @@ class ImageWrapper:
         return getattr(self._image, name)
 
     # SSIM
-    def compare_ssim(self, template_name):
+    def compare_region_ssim(self, template_name:str, x:int, y:int, width:int, height:int):
         """
-        Returns the structural similarity index of the image.
-        SSIM, which compares structural patterns in the images rather than pixel values.
+        Compares an image to a template using structural similarity (SSIM).
+        
+        Parameters:
+            template_name (str): The name of the template file.
+            x (int): The X coordinate of the top-left corner of the region to compare.
+            y (int): The Y coordinate of the top-left corner of the region to compare.
+            width (int): The width of the region to compare.
+            height (int): The height of the region to compare.
+        
+        Returns:
+            A float representing the similarity between the image and the template, with higher values indicating greater similarity.
         """
+        # Crop the specified region
+        cropped_img = self._image[y:height+y, x:width+x]
+        cropped_img_grayscale = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2GRAY)
+        cropped_template_grayscale = load_template_grayscale(template_name)[y:height+y, x:width+x]
+      
+        # Calculate SSIM
+        ssim_score = ssim(cropped_template_grayscale, cropped_img_grayscale)
+
+        return ssim_score
+
+    def compare_ssim(self, template_name:str):
+        """
+        Compares an image to a template using structural similarity (SSIM).
+        
+        Parameters:
+            template_name (str): The name of the template file.
+        
+        Returns:
+            A float representing the similarity between the image and the template, with higher values indicating greater similarity.
+        """
+         
         gray_template = load_template_grayscale(template_name)
 
         # Convert the image to grayscale

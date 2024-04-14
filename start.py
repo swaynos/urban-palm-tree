@@ -48,17 +48,9 @@ while(app):
 
     # Wrap the image, and run comparisons
     image = ImageWrapper(resized_image)
-    ssimResult = image.compare_ssim("squad_battles-home.png")
+    ssimResult = image.compare_region_ssim("squad_battles-home.png", 63, 25, 260, 56)
     pixelByPixelResult = image.compare_grayscale_to_template("squad_battles-home.png")
     print("SSIM Result: {}\nPixelByPixelResult: {}\n".format(ssimResult, pixelByPixelResult))
-
-    """ 
-    Performance (note, run in debug mode):
-        backend="mac_screencapture"
-        88 screenshots over 22.30443811416626s => 4 frames per second
-        With reduced screenshot size to just the window:
-        139 screenshots over 27.821112632751465 => 4.99 frames per second
-        backend=default
-        12 screenshots over 25.30296301841736s => .47 frames per second
-    """
+    
+    # Increment statistics
     statistics.count+=1
