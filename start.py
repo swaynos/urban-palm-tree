@@ -1,6 +1,5 @@
 from AppKit import NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
 import pyscreenshot as ImageGrab
-import time
 
 # urban-palm-tree imports
 from app_io import find_app
