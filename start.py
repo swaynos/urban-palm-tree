@@ -9,8 +9,7 @@ import config
 import monitoring
 
 # Begin Program
-APP_NAME = config.APP_NAME
-app = find_app(APP_NAME)
+app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
 statistics = monitoring.Statistics()
 
