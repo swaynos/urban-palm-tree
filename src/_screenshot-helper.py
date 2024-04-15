@@ -12,9 +12,11 @@ import monitoring as monitoring
 app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
 statistics = monitoring.Statistics()
+screenshotFilename = "screenshots/new-screenshot.png"
 
-# TODO: Move source to a src directory
-# TODO: setup debug profile to target this file
+# NOTE: This is a temporary script to aid in development
+# Run this script and it will capture a screenshot of the active window
+# It will loop and overwrite the screenshot
 
 # Loop
 while(app):
@@ -43,24 +45,16 @@ while(app):
         backend="mac_screencapture", 
         bbox =(window.X, window.Y, deltaX, deltaY)
     )
-    # Remove the top border from the image
     cropped_img = img.crop((0, config.APP_HEADER_HEIGHT, img.width, img.height))
-    
-    # Resize the image to 720p resolution (1280x720)
+
     if (config.APP_RESIZE_REQUIRED):
         resized_image = cropped_img.resize((1280, 720))
         final_image = resized_image
     else:
         final_image = cropped_img
 
-    # Wrap the image, and run comparisons
-    image = ImageWrapper(final_image)
-    ssimResult = image.compare_region_ssim("squad_battles-home.png", 63, 25, 260, 56)
-    pixelByPixelResult = image.compare_grayscale_to_template("squad_battles-home.png")
-    print("SSIM Result: {}\nPixelByPixelResult: {}\n".format(ssimResult, pixelByPixelResult))
-    
-    # TODO: Next capture screenshot of another menu and compare squad_battles-home to this screenshot. 
-    # Consider making it a unit test.
+    # Save the image to disk
+    final_image.save(screenshotFilename)
 
     # Increment statistics
     statistics.count+=1
