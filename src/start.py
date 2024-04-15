@@ -5,13 +5,16 @@ import pyscreenshot as ImageGrab
 from app_io import find_app
 from image import ImageWrapper
 from window import get_window
-import config
-import monitoring
+import config as config
+import monitoring as monitoring
 
 # Begin Program
 app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
 statistics = monitoring.Statistics()
+
+# TODO: Move source to a src directory
+# TODO: setup debug profile to target this file
 
 # Loop
 while(app):
@@ -52,5 +55,8 @@ while(app):
     pixelByPixelResult = image.compare_grayscale_to_template("squad_battles-home.png")
     print("SSIM Result: {}\nPixelByPixelResult: {}\n".format(ssimResult, pixelByPixelResult))
     
+    # TODO: Next capture screenshot of another menu and compare squad_battles-home to this screenshot. 
+    # Consider making it a unit test.
+
     # Increment statistics
     statistics.count+=1
