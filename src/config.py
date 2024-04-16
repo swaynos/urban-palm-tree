@@ -2,3 +2,5 @@
 APP_NAME= "Google Chrome"
 APP_HEADER_HEIGHT = 28
 APP_RESIZE_REQUIRED = False
+
+OLLAMA_URL = "http://localhost:11434/api/generate"

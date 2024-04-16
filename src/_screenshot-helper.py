@@ -1,10 +1,9 @@
 from AppKit import NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
-import pyscreenshot as ImageGrab
 
 # urban-palm-tree imports
-from app_io import find_app
+from app_io import find_app, get_image_from_window
 from image import ImageWrapper
-from window import get_window
+from window import get_window 
 import config as config
 import monitoring as monitoring
 
@@ -39,22 +38,8 @@ while(app):
 
     print("Grabbing a screenshot")
     window = get_window(pid)
-    deltaX = window.X + window.Width
-    deltaY = window.Y + window.Height
-    img = ImageGrab.grab(
-        backend="mac_screencapture", 
-        bbox =(window.X, window.Y, deltaX, deltaY)
-    )
-    cropped_img = img.crop((0, config.APP_HEADER_HEIGHT, img.width, img.height))
-
-    if (config.APP_RESIZE_REQUIRED):
-        resized_image = cropped_img.resize((1280, 720))
-        final_image = resized_image
-    else:
-        final_image = cropped_img
-
-    # Save the image to disk
-    final_image.save(screenshotFilename)
+    image = get_image_from_window(window)
+    image.save(screenshotFilename)
 
     # Increment statistics
     statistics.count+=1

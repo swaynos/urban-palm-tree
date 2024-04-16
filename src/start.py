@@ -1,8 +1,9 @@
 from AppKit import NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
-import pyscreenshot as ImageGrab
+import pynput
+import requests
 
 # urban-palm-tree imports
-from app_io import find_app
+from app_io import find_app, get_image_from_window
 from image import ImageWrapper
 from window import get_window
 import config as config
@@ -13,8 +14,9 @@ app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
 statistics = monitoring.Statistics()
 
-# TODO: Move source to a src directory
-# TODO: setup debug profile to target this file
+def compare_image_to_screenshot(image, screenshot_name):
+    ssimResult = image.compare_ssim(screenshot_name)
+    print("SSIM Result for screeshot is {} for screenshot {}".format(ssimResult, screenshot_name))
 
 # Loop
 while(app):
@@ -37,27 +39,26 @@ while(app):
 
     print("Grabbing a screenshot")
     window = get_window(pid)
-    deltaX = window.X + window.Width
-    deltaY = window.Y + window.Height
-    img = ImageGrab.grab(
-        backend="mac_screencapture", 
-        bbox =(window.X, window.Y, deltaX, deltaY)
-    )
-    # Remove the top border from the image
-    cropped_img = img.crop((0, config.APP_HEADER_HEIGHT, img.width, img.height))
-    
-    # Resize the image to 720p resolution (1280x720)
-    if (config.APP_RESIZE_REQUIRED):
-        resized_image = cropped_img.resize((1280, 720))
-        final_image = resized_image
-    else:
-        final_image = cropped_img
+    image = ImageWrapper(get_image_from_window(window))
 
-    # Wrap the image, and run comparisons
-    image = ImageWrapper(final_image)
-    ssimResult = image.compare_region_ssim("squad_battles-home.png", 63, 25, 260, 56)
-    pixelByPixelResult = image.compare_grayscale_to_template("squad_battles-home.png")
-    print("SSIM Result: {}\nPixelByPixelResult: {}\n".format(ssimResult, pixelByPixelResult))
+    print("Interpretting the image from api")
+
+    payload = {
+        "model": "llava",
+        "prompt": "What is in this picture?",
+        "stream": False,
+        "images": ["{}".format(image.scaled_as_base64())]
+    }
+    response = requests.post(config.OLLAMA_URL, json=payload)
+    print(response.text)
+
+    print("Sending a keypress '\\r'")
+    controller = pynput.keyboard.Controller()
+    controller.press(pynput.keyboard.KeyCode(char='\r'))
+    controller.release(pynput.keyboard.KeyCode(char='\r'))
+
+    #ssimResult = image.compare_region_ssim("squad_battles-home.png", 63, 25, 260, 56)
+    #compare_image_to_screenshot(image, "match-in-progress.png")
     
     # TODO: Next capture screenshot of another menu and compare squad_battles-home to this screenshot. 
     # Consider making it a unit test.

@@ -160,4 +160,4 @@ cython_debug/
 #.idea/
 
 # Screenshots being captured for development purposes
-screenshots/new-screenshot.png
+screenshots/
