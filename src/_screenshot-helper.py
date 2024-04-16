@@ -39,7 +39,8 @@ while(app):
     print("Grabbing a screenshot")
     window = get_window(pid)
     image = get_image_from_window(window)
-    image.save(screenshotFilename)
+    scaled_image = image.resize((960, 540))
+    scaled_image.save(screenshotFilename)
 
     # Increment statistics
     statistics.count+=1

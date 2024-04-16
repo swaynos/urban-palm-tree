@@ -44,9 +44,9 @@ def get_image_from_window(window):
     # Remove the top border from the image
     cropped_img = img.crop((0, config.APP_HEADER_HEIGHT, img.width, img.height))
     
-    # Resize the image to 720p resolution (1280x720)
+    # Resize the image to 540p resolution (960x540)
     if (config.APP_RESIZE_REQUIRED):
-        resized_image = cropped_img.resize((1280, 720))
+        resized_image = cropped_img.resize((960, 540))
         final_image = resized_image
     else:
         final_image = cropped_img
