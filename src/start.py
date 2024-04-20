@@ -1,9 +1,10 @@
 from AppKit import NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
+import json
 import pynput
 import requests
 
 # urban-palm-tree imports
-from app_io import find_app, get_image_from_window
+from app_io import find_app, get_image_from_window, get_prompt
 from image import ImageWrapper
 from window import get_window
 import config as config
@@ -45,12 +46,15 @@ while(app):
 
     payload = {
         "model": "llava",
-        "prompt": "What is in this picture?",
+        "prompt": get_prompt("screenshot_prompt.txt"),
         "stream": False,
         "images": ["{}".format(image.scaled_as_base64())]
     }
     response = requests.post(config.OLLAMA_URL, json=payload)
-    print(response.text)
+    responseObj = json.loads(response.text)
+
+
+    print(responseObj['response'])
 
     print("Sending a keypress '\\r'")
     controller = pynput.keyboard.Controller()
