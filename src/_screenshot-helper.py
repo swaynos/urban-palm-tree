@@ -1,4 +1,5 @@
 from AppKit import NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
+import time
 
 # urban-palm-tree imports
 from app_io import find_app, get_image_from_window
@@ -11,7 +12,7 @@ import monitoring as monitoring
 app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
 statistics = monitoring.Statistics()
-screenshotFilename = "screenshots/new-screenshot.png"
+screenshotFilename = "screenshots/new-screenshot{}.png"
 
 # NOTE: This is a temporary script to aid in development
 # Run this script and it will capture a screenshot of the active window
@@ -40,7 +41,7 @@ while(app):
     window = get_window(pid)
     image = get_image_from_window(window)
     scaled_image = image.resize((960, 540))
-    scaled_image.save(screenshotFilename)
+    scaled_image.save(screenshotFilename.format(time.time()))
 
     # Increment statistics
     statistics.count+=1
