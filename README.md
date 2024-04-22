@@ -40,7 +40,7 @@ This project is licensed under the GNU General Public License v3.0
 2. While out of game, navigate the menu's to place the user back into a game
 3. End to end testing. Automation will navigate the menus's and place the user into a game, automating some input to prevent from being kicked out
 4. Consider this use case: https://www.youtube.com/watch?v=DcYLT37ImBY
-    ### Summary (mistral:7b-instruct-v0.2-q4_K_M)
+    ### Summary
     In this project, we explore creating an autonomous Pokemon master using 
     deep reinforcement learning. We'll discuss the project's goals, 
     techniques, metrics & visualization, and future improvements.
