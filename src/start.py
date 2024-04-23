@@ -42,8 +42,7 @@ while(app):
     window = get_window(pid)
     image = ImageWrapper(get_image_from_window(window))
 
-    print("Interpretting the image from api")
-
+    print("Interpretting the image from ollama")
     payload = {
         "model": "llava",
         "prompt": get_prompt("screenshot_prompt.txt"),
@@ -52,12 +51,25 @@ while(app):
     }
     response = requests.post(config.OLLAMA_URL, json=payload)
     responseObj = json.loads(response.text)
-
-
     print(responseObj['response'])
 
-    print("Sending a keypress '\\r'")
     controller = pynput.keyboard.Controller()
+
+    # TODO: Must Have | multiple loops.
+    # Loop 1: Capture image, push to a stack or thread-safe variable.
+    # Loop 2: Read from stack, inference image. Push instructions to another stack or thread-safe variable.
+    # Loop 3: Read from instruction stack and send inputs.
+    # TODO: Must Hvae | abstract input to finite set of controller inputs instead of raw key mappings.
+    # TODO: Nice to have | read input from user.
+
+    # print("Holding L2")
+    # controller.press(pynput.keyboard.KeyCode(char='1'))
+
+    # print("Pressing L1")
+    # controller.press(pynput.keyboard.KeyCode(char='2'))
+    # controller.release(pynput.keyboard.KeyCode(char='2'))
+
+    # print("Pressing X")
     controller.press(pynput.keyboard.KeyCode(char='\r'))
     controller.release(pynput.keyboard.KeyCode(char='\r'))
 
