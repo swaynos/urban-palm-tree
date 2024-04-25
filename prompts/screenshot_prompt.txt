@@ -1,2 +1,1 @@
-This is a screenshot from the video game FC 24. I need to know if this screenshot is of a menu from the game, or if the screenshot is from a soccer match in 
-progress. Return with precisely "YES" and only "YES" if the image depicts a menu in the game, or precisely "NO" if the image depicts a soccer match in progress.
+What is this a picture of?
