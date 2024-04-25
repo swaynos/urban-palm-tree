@@ -7,8 +7,8 @@ import time
 
 # urban-palm-tree imports
 from app_io import find_app, get_image_from_window, get_prompt
-from controller import PlaystationController
 from image import ImageWrapper
+from game_controller import GameController
 from window import get_window
 import config as config
 import monitoring as monitoring
@@ -16,7 +16,7 @@ import monitoring as monitoring
 # Begin Program
 app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
-controller = PlaystationController()
+game = GameController()
 
 # TODO: Remove or place in another file
 def compare_image_to_screenshot(image, screenshot_name):
@@ -110,14 +110,14 @@ def controller_input_thread():
     In this thread we will read input from a controller (a Playstation Controller, but could be any other type of controller) and perform actions based on that input.
     It uses the `controller` module to grab the latest input data for each button on the controller and performs actions based on those inputs.
     """
-    while(controller):
+    while(True):
         try:
             # TODO: Only enter if the right window is active. (Annoying that keystrokes are entered while debugging)
             logging.debug(f"controller_input_thread: Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
 
             # press, release, tap to send input to the controller. Joystick movement is special.
-            logging.info("controller_input_thread: tapping Cross button")
-            controller.tap(PlaystationController.Cross)
+            logging.info("controller_input_thread: going to corner")
+            game.go_to_corner()
 
             time.sleep(.1)
             controller_input_thread_statistics.count += 1
