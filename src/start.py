@@ -117,9 +117,9 @@ def controller_input_thread():
 
             # press, release, tap to send input to the controller. Joystick movement is special.
             logging.info("controller_input_thread: going to corner")
-            game.go_to_corner()
 
-            time.sleep(.1)
+            game.go_to_corner(1)
+            
             controller_input_thread_statistics.count += 1
         except Exception as argument:
             logging.error(argument)
