@@ -3,9 +3,14 @@ import logging
 import requests
 import threading
 import time
+from sys import platform
 
 # urban-palm-tree imports
-from macos_app_io import activate_app, find_app, get_image_from_window, get_prompt
+if platform == "darwin":
+    from macos_app_io import activate_app, find_app, get_image_from_window, get_prompt
+elif platform == "linux" or platform == "linux2":
+    from linux_app_io import Foo
+
 from image import ImageWrapper
 from game_controller import GameController
 from window import get_window
