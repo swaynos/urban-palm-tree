@@ -1,4 +1,3 @@
-from AppKit import NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
 import json
 import logging
 import requests
@@ -6,7 +5,7 @@ import threading
 import time
 
 # urban-palm-tree imports
-from app_io import find_app, get_image_from_window, get_prompt
+from macos_app_io import activate_app, find_app, get_image_from_window, get_prompt
 from image import ImageWrapper
 from game_controller import GameController
 from window import get_window
@@ -33,23 +32,6 @@ capture_image_thread_statistics = monitoring.Statistics()
 infer_image_thread_statistics = monitoring.Statistics()
 controller_input_thread_statistics = monitoring.Statistics()
 
-def activate_app(thread_name=""):
-    # app.isActive: Indicates whether the application is currently frontmost.
-    if not (app.isActive()):
-        # TODO: Figure out why this spams
-        # print("{} is not active, attempting to active. Activation Policy = {}.".format(config.APP_NAME, app.activationPolicy()))
-        """
-        Activation Policy: https://developer.apple.com/documentation/appkit/nsapplicationactivationpolicy?language=objc
-        ActivationPolicy = 0: The application is activated when it becomes frontmost.
-
-        isActive() is not behaving as expected, forcing use of activateWithOptions instead of prompting the user to take action.
-        This works for now, but could become a pain point in the future.
-        """
-        activationResult = app.activateWithOptions_(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)
-
-        if not (activationResult):
-            logging.error(f"{thread_name}: app activation failed")
-
 
 def capture_image_thread():
     """
@@ -60,7 +42,8 @@ def capture_image_thread():
     while(app):
         try:
             logging.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
-            activate_app("capture_image_thread")
+            if not activate_app(app):
+                logging.error("capture_image_thread: app activation failed")
             logging.info("capture_image_thread: Grabbing a screenshot")
             window = get_window(pid)
             image = ImageWrapper(get_image_from_window(window))

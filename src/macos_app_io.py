@@ -2,7 +2,25 @@ import config
 import os
 import pyscreenshot as ImageGrab
 
-from AppKit import NSRunningApplication, NSWorkspace
+from AppKit import NSRunningApplication, NSWorkspace, NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
+
+def activate_app(app: NSRunningApplication):
+    # app.isActive: Indicates whether the application is currently frontmost.
+    if not (app.isActive()):
+        # TODO: Figure out why this spams
+        # print("{} is not active, attempting to active. Activation Policy = {}.".format(config.APP_NAME, app.activationPolicy()))
+        """
+        Activation Policy: https://developer.apple.com/documentation/appkit/nsapplicationactivationpolicy?language=objc
+        ActivationPolicy = 0: The application is activated when it becomes frontmost.
+
+        isActive() is not behaving as expected, forcing use of activateWithOptions instead of prompting the user to take action.
+        This works for now, but could become a pain point in the future.
+        """
+        activationResult = app.activateWithOptions_(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)
+
+        if not (activationResult):
+            return False
+    return True
 
 def find_app(appName):
     """
