@@ -1,6 +1,8 @@
 import json
 import logging
 import requests
+import signal
+import sys
 import threading
 import time
 from sys import platform
@@ -21,6 +23,8 @@ import monitoring as monitoring
 app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
 game = GameController()
+program_active = True
+logging.basicConfig(level=logging.FATAL)
 
 # TODO: Remove or place in another file
 def compare_image_to_screenshot(image, screenshot_name):
@@ -44,7 +48,7 @@ def capture_image_thread():
     It uses the `get_window` and `ImageWrapper` functions from the `app_io` module to grab the window and create an image object.
     The image is then locked with the `latest_screenshot_mutex` lock, ensuring that only one thread can access it at a time.
     """
-    while(app):
+    while(app and program_active):
         try:
             logging.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
             if not activate_app(app):
@@ -68,7 +72,7 @@ def infer_image_thread():
     It uses the `ImageWrapper` and `get_prompt` functions from the `app_io` module to grab a prompt and create an image object.
     The inferred image is then stored in a global variable for later use, ensuring that only one thread can access it at a time.
     """
-    while(True):
+    while(program_active):
         try:
             image = None
             with latest_screenshots_mutex:
@@ -78,7 +82,7 @@ def infer_image_thread():
                 logging.debug("infer_image_thread: Has looped {} times. Elapsed time is {}".format(infer_image_thread_statistics.count, infer_image_thread_statistics.get_time()))
                 logging.info("infer_image_thread: inferring image from latest screenshot using ollama")
                 payload = {
-                    "model": "llava",
+                    "model": "_llava",
                     "prompt": get_prompt("screenshot_prompt.txt"),
                     "stream": False,
                     "images": [f"{image.scaled_as_base64()}"]
@@ -98,7 +102,7 @@ def controller_input_thread():
     In this thread we will read input from a controller (a Playstation Controller, but could be any other type of controller) and perform actions based on that input.
     It uses the `controller` module to grab the latest input data for each button on the controller and performs actions based on those inputs.
     """
-    while(True):
+    while(program_active):
         try:
             # TODO: Only enter if the right window is active. (Annoying that keystrokes are entered while debugging)
             logging.debug(f"controller_input_thread: Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
@@ -124,6 +128,25 @@ capture_image_thread_instance.start()
 infer_image_thread_instance.start()
 controller_input_thread_instance.start()
 
+# Define sigint handler
+def exit_handler(signum, frame):
+    global program_active
+    signal_names = {signal.SIGINT: "SIGINT", signal.SIGTERM: "SIGTERM"}
+    logging.info(f"{signal_names[signum]}  received. Application attempting to close gracefully.")
+    program_active = False
+    if (signum == signal.SIGTERM):
+        # During SIGTERM if the sleep duration is short (~1s) the ContextManager won't terminate gracefully.
+        # This does not occur during SIGINT, so keeping it as a known issue for now. (Discovered in macos)
+        # The workaround is to press the stuck keys during SIGTERM.
+        game.io.press(game.io.L2)
+        game.io.press(game.io.Lstick.Up)
+        game.io.press(game.io.Lstick.Left)
+    print(f"{signal_names[signum]} received. Application attempting to close gracefully.") # TODO: remove
+
+signal.signal(signal.SIGINT, exit_handler)
+signal.signal(signal.SIGTERM, exit_handler)
+
+# Wait for threads to complete
 capture_image_thread_instance.join()
 infer_image_thread_instance.join()
 controller_input_thread_instance.join()
