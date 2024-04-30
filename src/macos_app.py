@@ -1,8 +1,10 @@
 import config
-import os
 import pyscreenshot as ImageGrab
+import Quartz
 
 from AppKit import NSRunningApplication, NSWorkspace, NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
+
+from window import Window
 
 def activate_app(app: NSRunningApplication):
     # app.isActive: Indicates whether the application is currently frontmost.
@@ -72,19 +74,29 @@ def get_image_from_window(window):
 
     return final_image
 
-def get_prompt(filename):
-    """
-    Reads the text from a prompt file and returns it as a string. 
-    The prompt file should be located in the "prompts" directory of the current working directory.
+def get_window(pid):
+    # TODO: There is a bug if all windows from the application are minimized
     
-    Args:
-        filename (str): The name of the prompt file to read.
-        
-    Returns:
-        A string containing the text from the given prompt file.
-    """
-    # Get the absolute path of the prompt file
-    prompt_file = os.path.join(os.getcwd(), "prompts", filename)
+    # Retrieve window information
+    window_list = Quartz.CGWindowListCopyWindowInfo(
+        Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,
+        Quartz.kCGNullWindowID
+    )
 
-    # Read the text from the prompt file
-    return open(prompt_file, "r").read()
+    matched_windows = []
+
+    # Iterate through the window list and filter by the app's PID
+    for window_info in window_list:
+        if window_info["kCGWindowOwnerPID"] == pid:
+            # Extract relevant window details (e.g., window ID, title, etc.)
+            window = Window()
+            window.Height = int(window_info["kCGWindowBounds"]["Height"])
+            window.Width = int(window_info["kCGWindowBounds"]["Width"])
+            window.X = int(window_info["kCGWindowBounds"]["X"])
+            window.Y = int(window_info["kCGWindowBounds"]["Y"])
+            matched_windows.append(window)
+
+    if (len(matched_windows) > 0):
+        
+        # TODO: What if there is more than one window?
+        return matched_windows[0]

@@ -2,20 +2,19 @@ import json
 import logging
 import requests
 import signal
-import sys
 import threading
 import time
 from sys import platform
 
 # urban-palm-tree imports
+from app_io import get_prompt
 if platform == "darwin":
-    from macos_app_io import activate_app, find_app, get_image_from_window, get_prompt
+    from macos_app import activate_app, find_app, get_image_from_window, get_window
 elif platform == "linux" or platform == "linux2":
-    from linux_app_io import Foo
+    from linux_app import Foo
 
 from image import ImageWrapper
 from game_controller import GameController
-from window import get_window
 import config as config
 import monitoring as monitoring
 
@@ -24,7 +23,7 @@ app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
 game = GameController()
 program_active = True
-logging.basicConfig(level=logging.FATAL)
+logging.basicConfig(level=logging.ERROR)
 
 # TODO: Remove or place in another file
 def compare_image_to_screenshot(image, screenshot_name):
@@ -128,11 +127,11 @@ capture_image_thread_instance.start()
 infer_image_thread_instance.start()
 controller_input_thread_instance.start()
 
-# Define sigint handler
+# Define sigint/sigterm handler
 def exit_handler(signum, frame):
     global program_active
     signal_names = {signal.SIGINT: "SIGINT", signal.SIGTERM: "SIGTERM"}
-    logging.info(f"{signal_names[signum]}  received. Application attempting to close gracefully.")
+    logging.critical(f"[{signal_names[signum]}] received. Application attempting to close gracefully.")
     program_active = False
     if (signum == signal.SIGTERM):
         # During SIGTERM if the sleep duration is short (~1s) the ContextManager won't terminate gracefully.
@@ -141,8 +140,7 @@ def exit_handler(signum, frame):
         game.io.press(game.io.L2)
         game.io.press(game.io.Lstick.Up)
         game.io.press(game.io.Lstick.Left)
-    print(f"{signal_names[signum]} received. Application attempting to close gracefully.") # TODO: remove
-
+# Activate the handlers
 signal.signal(signal.SIGINT, exit_handler)
 signal.signal(signal.SIGTERM, exit_handler)
 
