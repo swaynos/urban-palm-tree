@@ -40,7 +40,6 @@ capture_image_thread_statistics = monitoring.Statistics()
 infer_image_thread_statistics = monitoring.Statistics()
 controller_input_thread_statistics = monitoring.Statistics()
 
-
 def capture_image_thread():
     """
     In this thread we will capture a screenshot of the desired application and stores it in a global variable for later use.

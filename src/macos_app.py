@@ -74,7 +74,7 @@ def get_image_from_window(window):
 
     return final_image
 
-def get_window(pid):
+def get_window(pid) -> Window: 
     # TODO: There is a bug if all windows from the application are minimized
     
     # Retrieve window information
