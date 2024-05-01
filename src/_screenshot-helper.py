@@ -2,7 +2,7 @@ from AppKit import NSApplicationActivateAllWindows, NSApplicationActivateIgnorin
 import time
 
 # urban-palm-tree imports
-from app_io import find_app, get_image_from_window
+from macos_app import find_app, get_image_from_window
 from image import ImageWrapper
 from window import get_window 
 import config as config
@@ -18,8 +18,15 @@ screenshotFilename = "screenshots/new-screenshot{}.png"
 # Run this script and it will capture a screenshot of the active window
 # It will loop and overwrite the screenshot
 
+def grab_image(window):
+    print("Grabbing a screenshot")
+    image = get_image_from_window(window)
+    scaled_image = image.resize((960, 540))
+    scaled_image.save(screenshotFilename.format(time.time()))
+
 # Loop
-while(app):
+window = get_window(pid)
+while(window):
     print("Has looped {} times. Elapsed time is {}".format(statistics.count, statistics.get_time()))
     # app.isActive: Indicates whether the application is currently frontmost.
     if not (app.isActive()):
@@ -38,7 +45,6 @@ while(app):
             break
 
     print("Grabbing a screenshot")
-    window = get_window(pid)
     image = get_image_from_window(window)
     scaled_image = image.resize((960, 540))
     scaled_image.save(screenshotFilename.format(time.time()))
