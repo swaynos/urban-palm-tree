@@ -9,9 +9,9 @@ from sys import platform
 # urban-palm-tree imports
 from app_io import get_prompt
 if platform == "darwin":
-    from macos_app import activate_app, find_app, get_image_from_window, get_window
+    from macos_app import RunningApplication
 elif platform == "linux" or platform == "linux2":
-    from linux_app import Foo
+    from linux_app import RunningApplication
 
 from image import ImageWrapper
 from game_controller import GameController
@@ -19,14 +19,20 @@ import config as config
 import monitoring as monitoring
 
 # Begin Program
-app = find_app(config.APP_NAME)
-pid = app.processIdentifier()
+app = RunningApplication()
+if platform == "darwin":
+    app.find_app(config.APP_NAME)
+    app.activate_app()
+    app.get_window()
+elif platform == "linux" or platform == "linux2":
+    app.find_window_by_name(config.APP_NAME)
+    app.activate_window()
 
 game = GameController()
 program_active = True
 logging.basicConfig(level=logging.ERROR)
 
-# TODO: Remove or place in another file
+# TODO: Remove
 def compare_image_to_screenshot(image, screenshot_name):
     ssimResult = image.compare_ssim(screenshot_name)
     logging.info("SSIM Result for screeshot is {} for screenshot {}".format(ssimResult, screenshot_name))
@@ -50,11 +56,16 @@ def capture_image_thread():
     while(app and program_active):
         try:
             logging.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
-            if not activate_app(app):
-                logging.error("capture_image_thread: app activation failed")
+            if platform == "darwin":
+                if not app.activate_app():
+                    logging.error("capture_image_thread: app activation failed")
+            elif platform == "linux" or platform == "linux2":
+                app.activate_window()
+            
             logging.info("capture_image_thread: Grabbing a screenshot")
-            window = get_window(pid)
-            image = ImageWrapper(get_image_from_window(window))
+
+            image = ImageWrapper(app.get_image_from_window)
+
             # Lock the image so that if another thread is trying to read, we aren't overwritting it
             with latest_screenshots_mutex:
                 # clear the stack if it gets too big
@@ -122,7 +133,6 @@ controller_input_thread_instance = threading.Thread(target=controller_input_thre
 # TODO: another thread to read user input???
 
 # Start the threads
-activate_app(app)
 capture_image_thread_instance.start()
 infer_image_thread_instance.start()
 controller_input_thread_instance.start()
