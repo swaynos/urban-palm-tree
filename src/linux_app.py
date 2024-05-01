@@ -74,7 +74,7 @@ class RunningApplication():
 
         # Capture the specific screen area
         screenshot = ImageGrab.grab(bbox=(x, y, x + width, y + height))
-        screenshot.save('active_window.png')
+
         
         # Resize the image to 540p resolution (960x540)
         final_image = None
