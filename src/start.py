@@ -58,13 +58,14 @@ def capture_image_thread():
             logging.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
             if platform == "darwin":
                 if not app.activate_app():
-                    logging.error("capture_image_thread: app activation failed")
+                    raise RuntimeError("darwin app activation failed")
+                app.get_window()
             elif platform == "linux" or platform == "linux2":
                 app.activate_window()
             
             logging.info("capture_image_thread: Grabbing a screenshot")
 
-            image = ImageWrapper(app.get_image_from_window)
+            image = ImageWrapper(app.get_image_from_window())
 
             # Lock the image so that if another thread is trying to read, we aren't overwritting it
             with latest_screenshots_mutex:

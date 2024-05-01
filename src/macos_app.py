@@ -36,11 +36,12 @@ class RunningApplication():
         # Iterate over the list of windows
         for app in apps:
             # app.bundleIdentifier() can also be used
+            logging.debug(f"{app.localizedName()} - {app.processIdentifier()}")
             if (app.localizedName().lower() == appName.lower()):
                 _app = app
 
         self.app = _app
-        self.pid = app.processIdentifier()
+        self.pid = _app.processIdentifier()
         return _app
     
     def activate_app(self):
@@ -79,7 +80,7 @@ class RunningApplication():
 
         # Iterate through the window list and filter by the app's PID
         for window_info in window_list:
-            if window_info["kCGWindowOwnerPID"] == pid:
+            if window_info["kCGWindowOwnerPID"] == self.pid:
                 # Extract relevant window details (e.g., window ID, title, etc.)
                 window = Window()
                 window.Height = int(window_info["kCGWindowBounds"]["Height"])
