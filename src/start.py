@@ -21,6 +21,7 @@ import monitoring as monitoring
 # Begin Program
 app = find_app(config.APP_NAME)
 pid = app.processIdentifier()
+
 game = GameController()
 program_active = True
 logging.basicConfig(level=logging.ERROR)

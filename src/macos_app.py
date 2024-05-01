@@ -4,7 +4,18 @@ import Quartz
 
 from AppKit import NSRunningApplication, NSWorkspace, NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
 
-from window import Window
+# window
+class Window:
+    def __init__(self):
+        self.Height = int(0)
+        self.Width = int(0)
+        self.X = int(0)
+        self.Y = int(0)
+
+class RunningApplication():
+    def __init__(self):
+         self.window_id = None
+    
 
 def activate_app(app: NSRunningApplication):
     # app.isActive: Indicates whether the application is currently frontmost.
