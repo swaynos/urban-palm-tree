@@ -37,6 +37,9 @@ def compare_image_to_screenshot(image, screenshot_name):
     ssimResult = image.compare_ssim(screenshot_name)
     logging.info("SSIM Result for screeshot is {} for screenshot {}".format(ssimResult, screenshot_name))
 
+# TODO: Better way to capture memory
+memory = None
+
 # Begin Threading
 # Create a mutex object for the most recent screenshot
 latest_screenshots_mutex = threading.Lock()
@@ -85,6 +88,7 @@ def infer_image_thread():
     """
     while(program_active):
         try:
+            global memory
             image = None
             with latest_screenshots_mutex:
                 if (len(latest_screenshots_stack) > 0):
@@ -92,15 +96,20 @@ def infer_image_thread():
             if(image != None):
                 logging.debug("infer_image_thread: Has looped {} times. Elapsed time is {}".format(infer_image_thread_statistics.count, infer_image_thread_statistics.get_time()))
                 logging.info("infer_image_thread: inferring image from latest screenshot using ollama")
+                prompt = get_prompt("screenshot_prompt.txt")
+                if(memory is not None):
+                    prompt = prompt + f"In the last screenshot, your response was {memory}"
                 payload = {
                     "model": "_llava",
-                    "prompt": get_prompt("screenshot_prompt.txt"),
+                    "prompt": prompt,
                     "stream": False,
                     "images": [f"{image.scaled_as_base64()}"]
                 }
                 response = requests.post(config.OLLAMA_URL, json=payload)
                 responseObj = json.loads(response.text)
-                logging.info(responseObj['response']) # TODO: do something
+                memory = responseObj['response'].strip(" ")
+                logging.info(responseObj['response']) # TODO: figure out logging
+                print(responseObj['response']) # TODO: Do something more useful here
             else:
                 logging.debug("infer_image_thread: There is not a latest screenshot to infer from")
                 time.sleep(1)
@@ -113,15 +122,20 @@ def controller_input_thread():
     In this thread we will read input from a controller (a Playstation Controller, but could be any other type of controller) and perform actions based on that input.
     It uses the `controller` module to grab the latest input data for each button on the controller and performs actions based on those inputs.
     """
+    global memory
     while(program_active):
         try:
             # TODO: Only enter if the right window is active. (Annoying that keystrokes are entered while debugging)
             logging.debug(f"controller_input_thread: Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
-
-            # press, release, tap to send input to the controller. Joystick movement is special.
-            logging.info("controller_input_thread: going to corner")
-
-            game.go_to_corner(1)
+            
+            if memory == "IN-MATCH":
+                # press, release, tap to send input to the controller. Joystick movement is special.
+                logging.info("controller_input_thread: grabbing closest player and spinning in a circle")
+                game.io.tap(game.io.L1)
+                game.spin_in_circles(3)
+            elif memory == "IN-MENU":
+                logging.info("controller_input_thread: tapping cross")
+                game.io.tap(game.io.Cross)
             
             controller_input_thread_statistics.count += 1
         except Exception as argument:
