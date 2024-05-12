@@ -1,1 +1,1 @@
-What is this a picture of?
+This is a screenshot from the game EA FC 24. I need to know if the user is playing a match or is navigating a menu. Reply only with 'IN-MATCH' if the screenshot is of the user playing a match, or 'IN-MENU' if the user is navigating a menu. 
