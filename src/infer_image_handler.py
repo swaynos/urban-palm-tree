@@ -1,7 +1,8 @@
+import asyncio
 import json
 import logging
-import requests
 import time
+import requests
 
 import config
 import monitoring
@@ -10,18 +11,19 @@ from app_io import get_prompt
 
 infer_image_thread_statistics = monitoring.Statistics()
 
-def infer_image_handler():
+async def infer_image_handler():
     """
     In this thread we will perform an image recognition task on the most recent screenshot captured by the `capture_image_thread`.
     It uses the `ImageWrapper` and `get_prompt` functions from the `app_io` module to grab a prompt and create an image object.
     The inferred image is then stored in a global variable for later use, ensuring that only one thread can access it at a time.
     """
+    logger = logging.getLogger(__name__)
     while(not exit_event.is_set()):
         try:
             image = None
             memory = None
             if (not screenshots_stack.empty()):
-                image = screenshots_stack.get_nowait()
+                image = await screenshots_stack.get()
             if (not inferred_memory_stack.empty()):
                 memory = inferred_memory_stack._queue[-1]
             if(image != None):
@@ -29,8 +31,8 @@ def infer_image_handler():
                 screenshotFilename = "screenshots/new-screenshot{}.png"
                 image._image.save(screenshotFilename.format(time.time()))
 
-                logging.debug("infer_image_thread: Has looped {} times. Elapsed time is {}".format(infer_image_thread_statistics.count, infer_image_thread_statistics.get_time()))
-                logging.info("infer_image_thread: inferring image from latest screenshot using ollama")
+                logger.debug("Has looped {} times. Elapsed time is {}".format(infer_image_thread_statistics.count, infer_image_thread_statistics.get_time()))
+                logger.debug("inferring image from latest screenshot using ollama")
                 prompt = get_prompt("screenshot_prompt.txt")
                 if(memory is not None):
                     prompt = prompt + f"In the last screenshot, your response was {memory}"
@@ -42,12 +44,12 @@ def infer_image_handler():
                 }
                 response = requests.post(config.OLLAMA_URL, json=payload)
                 responseObj = json.loads(response.text)
-                inferred_memory_stack.put_nowait(responseObj['response'].strip(" "))
-                logging.info(responseObj['response']) # TODO: figure out logging
-                print(responseObj['response']) # TODO: Do something more useful here
+                await inferred_memory_stack.put(responseObj['response'].strip(" "))
+                logger.info(responseObj['response']) # TODO: figure out logging
+                # TODO: Do something more useful here
             else:
-                logging.debug("infer_image_thread: There is not a latest screenshot to infer from")
-                time.sleep(1)
+                logger.debug("There is not a latest screenshot to infer from")
             infer_image_thread_statistics.count += 1
+            await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
-            logging.error(argument)
+            logger.error(argument)

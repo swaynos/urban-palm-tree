@@ -1,13 +1,11 @@
-import json
+import asyncio
 import logging
-import requests
 import signal
 import threading
-import time
 from sys import platform
 
 # urban-palm-tree imports
-from shared_resources import exit_event, screenshots_stack, inferred_memory_stack
+from shared_resources import exit_event
 from capture_image_handler import capture_image_handler
 from game_control_handler import controller_input_handler
 from infer_image_handler import infer_image_handler
@@ -17,6 +15,9 @@ elif platform == "linux" or platform == "linux2":
     from linux_app import RunningApplication
 from game_controller import GameController
 import config
+
+# configure logging for the application
+logging.basicConfig(level="DEBUG") # format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Begin Program
 app = RunningApplication()
@@ -28,19 +29,7 @@ elif platform == "linux" or platform == "linux2":
     app.find_window_by_name(config.APP_NAME)
     app.activate_window()
 
-game = GameController()
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# Create a new Thread object for each function
-capture_image_thread_instance = threading.Thread(target=capture_image_handler, args=(app,), name='capture_image_thread')
-infer_image_thread_instance = threading.Thread(target=infer_image_handler, name='infer_image_thread')
-controller_input_thread_instance = threading.Thread(target=controller_input_handler, args=(game,), name='controller_input_thread')
-# TODO: another thread to read user input???
-
-capture_image_thread_instance.start()
-infer_image_thread_instance.start()
-controller_input_thread_instance.start()
+game = GameController()         
 
 # Define sigint/sigterm handler
 def exit_handler(signum, frame):
@@ -58,7 +47,12 @@ def exit_handler(signum, frame):
 signal.signal(signal.SIGINT, exit_handler)
 signal.signal(signal.SIGTERM, exit_handler)
 
-# Wait for threads to complete
-capture_image_thread_instance.join()
-infer_image_thread_instance.join()
-controller_input_thread_instance.join()
+async def main():
+    await asyncio.gather(
+        capture_image_handler(app),
+        infer_image_handler(),
+        controller_input_handler(game)
+    )
+
+if __name__ == "__main__":
+    asyncio.run(main())

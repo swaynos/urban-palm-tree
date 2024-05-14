@@ -50,7 +50,7 @@ class RunningApplication():
 
         # app.isActive: Indicates whether the application is currently frontmost.
         if not (self.app.isActive()):
-            logging.info("{} is not active, attempting to active. Activation Policy = {}.".format(config.APP_NAME, self.app.activationPolicy()))
+            logging.debug("{} is not active, attempting to active. Activation Policy = {}.".format(config.APP_NAME, self.app.activationPolicy()))
             """
             Activation Policy: https://developer.apple.com/documentation/appkit/nsapplicationactivationpolicy?language=objc
             ActivationPolicy = 0: The application is activated when it becomes frontmost.
