@@ -6,6 +6,7 @@ from PIL import Image
 
 from skimage.metrics import structural_similarity as ssim
 
+# TODO: Remove this method
 def load_template_grayscale(template_name):
     """Load a grayscale template image from disk."""
     template = cv2.imread("screenshots/{}".format(template_name))
