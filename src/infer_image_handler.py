@@ -35,7 +35,7 @@ async def infer_image_handler():
                 logger.debug("inferring image from latest screenshot using ollama")
                 prompt = get_prompt("screenshot_prompt.txt")
                 if(memory is not None):
-                    prompt = prompt + f"In the last screenshot, your response was {memory}"
+                    prompt = prompt + f" In the last screenshot, your response was {memory}."
                 payload = {
                     "model": "_llava",
                     "prompt": prompt,
