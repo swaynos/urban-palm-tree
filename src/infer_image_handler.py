@@ -27,10 +27,6 @@ async def infer_image_handler():
             if (not inferred_memory_stack.empty()):
                 memory = inferred_memory_stack._queue[-1]
             if(image != None):
-                # TODO: throwaway code
-                screenshotFilename = "screenshots/new-screenshot{}.png"
-                image._image.save(screenshotFilename.format(time.time()))
-
                 logger.debug("Has looped {} times. Elapsed time is {}".format(infer_image_thread_statistics.count, infer_image_thread_statistics.get_time()))
                 logger.debug("inferring image from latest screenshot using ollama")
                 prompt = get_prompt("screenshot_prompt.txt")
@@ -44,9 +40,10 @@ async def infer_image_handler():
                 }
                 response = requests.post(config.OLLAMA_URL, json=payload)
                 responseObj = json.loads(response.text)
-                await inferred_memory_stack.put(responseObj['response'].strip(" "))
-                logger.info(responseObj['response']) # TODO: figure out logging
-                # TODO: Do something more useful here
+                responseObjText = responseObj['response'].strip(" ")
+                responseObjJson = json.loads(responseObjText)
+                await inferred_memory_stack.put(responseObjJson)
+                logger.debug("Inferred match-status is {}".format(responseObjJson["match-status"]))
             else:
                 logger.debug("There is not a latest screenshot to infer from")
             infer_image_thread_statistics.count += 1

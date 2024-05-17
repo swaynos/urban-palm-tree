@@ -1,1 +1,12 @@
-This is a screenshot from the game EA FC 24. I need to know if the user is playing a match or is navigating a menu. Reply only with 'IN-MATCH' if the screenshot is of the user playing a match, or 'IN-MENU' if the user is navigating a menu. 
+This is a screenshot from the game EA FC 24. I need to know key details about the screenshot, you will provide an answer using a specific json template.
+First, you will tell me if the user is playing a match or if the user is navigating a menu. 
+While in a match, is the screenshot from an instant replay, or is it from a live match in progress?
+Then you will tell me if there is a minimap at the bottom of the screen or not?
+
+Answer only by using the following template.
+{
+    "match-status" : "IN-MATCH" | "IN-MENU",
+    "live-match": "YES" | "NO",
+    "instant-replay" : "YES" | "NO",
+    "minimap" : "YES" | "NO"
+}

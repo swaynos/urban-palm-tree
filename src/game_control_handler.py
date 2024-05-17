@@ -7,6 +7,7 @@ from shared_resources import exit_event, inferred_memory_stack
 
 controller_input_thread_statistics = monitoring.Statistics()
 
+# TODO: Check for active application before sending
 async def controller_input_handler(game: GameController):
     """
     In this thread we will read input from a controller (a Playstation Controller, but could be any other type of controller) and perform actions based on that input.
@@ -22,12 +23,12 @@ async def controller_input_handler(game: GameController):
             if (not inferred_memory_stack.empty()):
                 memory = inferred_memory_stack._queue[-1]
             
-            if memory == "IN-MATCH":
+            if (memory is not None and memory["match-status"] == "IN-MATCH"):
                 # press, release, tap to send input to the controller. Joystick movement is special.
                 logger.debug("grabbing closest player and spinning in a circle")
                 game.io.tap(game.io.L1)
                 game.spin_in_circles(3)
-            elif memory == "IN-MENU":
+            elif (memory is not None and memory["match-status"] == "IN-MENU"):
                 logger.debug("tapping cross")
                 game.io.tap(game.io.Cross)
             
