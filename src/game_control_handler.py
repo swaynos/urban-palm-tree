@@ -31,10 +31,14 @@ async def controller_input_handler(game: GameController):
                 responseJson = memory[0]
                 image = cast(ImageWrapper, memory[1])
                 if (responseJson["match-status"] == "IN-MATCH"):
-                    # press, release, tap to send input to the controller. Joystick movement is special.
-                    logger.info("grabbing closest player and spinning in a circle")
-                    game.io.tap(game.io.L1)
-                    game.spin_in_circles(3)
+                    if (responseJson["live-match"] == "NO" or responseJson["instant-replay"] == "YES"):
+                        logger.info("game is not in a live match, tapping cross")
+                        game.io.tap(game.io.Cross)
+                    else:
+                        # press, release, tap to send input to the controller. Joystick movement is special.
+                        logger.info("grabbing closest player and spinning in a circle")
+                        game.io.tap(game.io.L1)
+                        game.spin_in_circles(3)
                 elif (responseJson["match-status"] == "IN-MENU"):
                     logger.info("attempting to navigate the menu")
                     await attempt_navigate_menu(game, image)
@@ -43,14 +47,22 @@ async def controller_input_handler(game: GameController):
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
             logger.error(argument)
+            # Just tap cross and see what happens
+            game.io.tap(game.io.Cross)
 
 async def attempt_navigate_menu(game: GameController, image: ImageWrapper):
+    logger = logging.getLogger(__name__)
     # Squad Selection 2x2
     cropped_image_base64 = image.return_region_as_base64(70,310,145,145)
     response = await infer_image_from_ollama(get_prompt("menu-four-logos_prompt_returns-sequence.txt"), cropped_image_base64)
-    responseJson = json.loads(response)
+    try:
+        responseJson = json.loads(response)
+    except json.JSONDecodeError:
+        logger.error(response)
+        responseJson = False
     if responseJson:
         for move in responseJson:
+            logger.info(f"tapping {move}")
             if move == "LEFT":
                 game.io.tap(game.io.DPadLeft)
             elif move == "RIGHT":
@@ -61,6 +73,3 @@ async def attempt_navigate_menu(game: GameController, image: ImageWrapper):
                 game.io.tap(game.io.DPadDown)
             elif move == "ENTER":
                 game.io.tap(game.io.Cross)
-
-    # Just tap cross and see what happens
-    game.io.tap(game.io.Cross)

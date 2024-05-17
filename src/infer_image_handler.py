@@ -39,5 +39,8 @@ async def infer_image_handler():
                 logger.warning("There is not a latest screenshot to infer from")
             infer_image_thread_statistics.count += 1
             await asyncio.sleep(0)  # Yield control back to the event loop
+        except json.JSONDecodeError as jsonDecodeError:
+            logger.error(f"Error parsing the json response: {response}")
+            logger.error(jsonDecodeError)
         except Exception as argument:
             logger.error(argument)
