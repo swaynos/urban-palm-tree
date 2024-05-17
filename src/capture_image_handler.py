@@ -1,9 +1,11 @@
 import asyncio
 import logging
 from sys import platform
+from time import time
 
+import config
 from image import ImageWrapper
-from shared_resources import exit_event, screenshots_stack
+from shared_resources import clear_oldest_from_lifoqueue, exit_event, screenshots_stack
 import monitoring
 
 capture_image_thread_statistics = monitoring.Statistics()
@@ -29,9 +31,12 @@ async def capture_image_handler(app):
 
             image = ImageWrapper(app.get_image_from_window())
             
-            # # clear the stack if it gets too big
-            # if (not screenshots_stack.empty()):
-            #     screenshots_stack.maxsize # TODO: make this a config option and set a maximum size
+            if config.SAVE_SCREENSHOTS:
+                screenshotFilename = f"{config.SCREENSHOTS_DIR}new-screenshot{time()}.png"
+                image._image.save(screenshotFilename)
+
+            if screenshots_stack.full():
+                await clear_oldest_from_lifoqueue(screenshots_stack, 8)
 
             await screenshots_stack.put(image)
             capture_image_thread_statistics.count += 1

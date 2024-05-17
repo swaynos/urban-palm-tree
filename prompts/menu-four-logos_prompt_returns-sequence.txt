@@ -1,0 +1,6 @@
+Are there four logos in this screenshot arranged in a 2x2 square? If not reply with only False so I can parse you reply.
+
+If there are four logos, I need your help selecting a new logo that has not been previously used. A previously used logo has a green check icon displayed over it. You will help by providing a sequence to navigate to a new logo without a green check icon. Valid moves in the sequence are LEFT, RIGHT, UP, DOWN, and ENTER. The selection may already be valid, in which case you will just reply with one move, ENTER. Here are some example sequences that would move the selection, please reply only with valid json like in the examples below so that I can parse your reply.
+["ENTER"]
+["LEFT", "DOWN", "ENTER"]
+["RIGHT", "DOWN", "ENTER"]

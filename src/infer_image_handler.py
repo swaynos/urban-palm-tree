@@ -1,10 +1,8 @@
 import asyncio
 import json
 import logging
-import time
-import requests
 
-import config
+from inference import infer_image_from_ollama
 import monitoring
 from shared_resources import exit_event, screenshots_stack, inferred_memory_stack
 from app_io import get_prompt
@@ -29,20 +27,13 @@ async def infer_image_handler():
             if(image != None):
                 logger.debug("Has looped {} times. Elapsed time is {}".format(infer_image_thread_statistics.count, infer_image_thread_statistics.get_time()))
                 logger.debug("inferring image from latest screenshot using ollama")
-                prompt = get_prompt("screenshot_prompt.txt")
+                prompt = get_prompt("match-status_prompt_returns-json.txt")
                 if(memory is not None):
                     prompt = prompt + f" In the last screenshot, your response was {memory}."
-                payload = {
-                    "model": "_llava",
-                    "prompt": prompt,
-                    "stream": False,
-                    "images": [f"{image.scaled_as_base64()}"]
-                }
-                response = requests.post(config.OLLAMA_URL, json=payload)
-                responseObj = json.loads(response.text)
-                responseObjText = responseObj['response'].strip(" ")
-                responseObjJson = json.loads(responseObjText)
-                await inferred_memory_stack.put(responseObjJson)
+                response = await infer_image_from_ollama(prompt, image.scaled_as_base64())
+                responseObjJson = json.loads(response) # Prompt expects templated json response
+                # TODO: What happens when the response isn't json?
+                await inferred_memory_stack.put([responseObjJson, image])
                 logger.debug("Inferred match-status is {}".format(responseObjJson["match-status"]))
             else:
                 logger.debug("There is not a latest screenshot to infer from")

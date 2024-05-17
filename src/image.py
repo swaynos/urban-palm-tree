@@ -2,11 +2,10 @@ import numpy as np
 import base64
 import cv2
 import io
-from PIL import Image
+from PIL.Image import Image as PILImage
 
 from skimage.metrics import structural_similarity as ssim
 
-# TODO: Remove this method
 def load_template_grayscale(template_name):
     """Load a grayscale template image from disk."""
     template = cv2.imread("screenshots/{}".format(template_name))
@@ -15,29 +14,26 @@ def load_template_grayscale(template_name):
 # TODO: Cache templates
 # TODO: Unit Tests
 class ImageWrapper:
-    """A class to represent an image. Wraps MatLike which is used by openCV.
-    """
-    def __init__(self, image: cv2.typing.MatLike):
-        if isinstance(image, Image.Image):
-            # TODO: Determine if we need to convert to numpy array? Can't we keep it as MatLike since that is what is expected in cv2?
-            array = np.array(image)
+    """A class to represent an image. Wraps a PIL Image and a MatLike which is used by OpenCV."""
+    def __init__(self, image):
+        if isinstance(image, PILImage):
             self._image = image
-            self._imageArray = array
-        else:
-            # TODO: Set self._image from array
+            self._imageArray = np.array(image)
+        elif isinstance(image, np.ndarray):
             self._imageArray = image
+            self._image = PILImage.fromarray(image)
+        else:
+            raise ValueError("Unsupported image type: must be a PIL.Image.Image or a numpy.ndarray")
 
-    def __getattr__(self, name):
-        """Delegate access to the wrapped object's attributes."""
-        return getattr(self._imageArray, name)
-
-    # The scaled_as_base64 method scales the image (for better performance) 
-    # and then converts the image into a base64 encoded string.
-    # It takes the width and height, optional with defaults to 360p
-    # It takes an encoding parameter, which is optional and defaults to 'utf-8'.
+    # Image manipulation
     def scaled_as_base64(self, width=640, height=360, encoding ='utf-8'):
+        """
+        The scaled_as_base64 method scales the image (for better performance) 
+        and then converts the image into a base64 encoded string.
+        It takes the width and height, optional with defaults to 360p
+        It takes an encoding parameter, which is optional and defaults to 'utf-8'.
+        """
         # Scale the image
-
         scaled_image = self._image.resize((width, height))
         # Convert the image to bytes in memory
         image_bytes = io.BytesIO()
@@ -45,7 +41,22 @@ class ImageWrapper:
         image_base64 = base64.b64encode(image_bytes.getvalue()).decode(encoding)
         return image_base64
 
-    # SSIM
+    def return_region_as_base64(self, x:int, y:int, width:int, height:int, encoding ='utf-8'):
+        """
+        Returns the base64 encoded string of the region defined by the coordinates.
+        """
+        # Crop the specified region
+        deltaX = x+width
+        deltaY = y+height
+        cropped_img = self._image.crop((x, y, deltaX, deltaY))
+        # Convert the image to bytes in memory
+        image_bytes = io.BytesIO()
+        cropped_img.save(image_bytes, format="PNG")
+
+        image_base64 = base64.b64encode(image_bytes.getvalue()).decode(encoding)
+        return image_base64
+
+    # SSIM Comparisons
     def compare_region_ssim(self, template_name:str, x:int, y:int, width:int, height:int):
         """
         Compares an image to a template using structural similarity (SSIM).
@@ -91,7 +102,7 @@ class ImageWrapper:
 
         return ssim_score
     
-    # Pixel-by-Pixel Difference
+    # Pixel-by-Pixel Comparison
     def compare_grayscale_to_template(self, template_name):
         """
         Returns a similarity threshold, which could be used for comparisons.

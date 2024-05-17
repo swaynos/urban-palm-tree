@@ -161,3 +161,6 @@ cython_debug/
 
 # Screenshots being captured for development purposes
 screenshots/
+
+# Ingore macOS .DS_Store
+.DS_Store
