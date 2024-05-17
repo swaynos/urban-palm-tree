@@ -17,7 +17,7 @@ from game_controller import GameController
 import config
 
 # configure logging for the application
-logging.basicConfig(level="DEBUG") # format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=config.LOG_LEVEL) # format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Begin Program
 app = RunningApplication()
@@ -33,15 +33,14 @@ game = GameController()
 
 # Define sigint/sigterm handler
 def exit_handler(signum, frame):
-    signal_names = {signal.SIGINT: "SIGINT", signal.SIGTERM: "SIGTERM"}
+    signal_names = {signal.SIGINT: "SIGINT", signal.SIGTERM: "SIGTERM", signal.SIGSTOP: "SIGSTOP"}
     logging.critical(f"[{signal_names[signum]}] received. Application attempting to close gracefully.")
-    if (signum == signal.SIGTERM):
-        # During SIGTERM if the sleep duration is short (~1s) the ContextManager won't terminate gracefully.
-        # This does not occur during SIGINT, so keeping it as a known issue for now. (Discovered in macos)
-        # The workaround is to press the stuck keys during SIGTERM.
-        game.io.press(game.io.L2)
-        game.io.press(game.io.Lstick.Up)
-        game.io.press(game.io.Lstick.Left)
+    
+    # During exit these keys can become stuck.
+    # The workaround is to press the stuck keys during an exit event.
+    game.io.press(game.io.L2)
+    game.io.press(game.io.Lstick.Up)
+    game.io.press(game.io.Lstick.Left)
     exit_event.set()
 # Activate the handlers
 signal.signal(signal.SIGINT, exit_handler)

@@ -20,7 +20,7 @@ class RunningApplication():
         def search(win):
             nonlocal window_id
             if win.get_wm_name() != None and win.get_wm_name().startswith(window_name):
-                logging.info(f"{win.get_wm_name()} - {win.id} - {win.get_wm_state()}")
+                logging.debug(f"{win.get_wm_name()} - {win.id} - {win.get_wm_state()}")
                 win_state = win.get_wm_state()
                 if (win_state):
                     # Will return the first found window with a non-empty state

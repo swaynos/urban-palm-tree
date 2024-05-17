@@ -32,11 +32,11 @@ async def controller_input_handler(game: GameController):
                 image = cast(ImageWrapper, memory[1])
                 if (responseJson["match-status"] == "IN-MATCH"):
                     # press, release, tap to send input to the controller. Joystick movement is special.
-                    logger.debug("grabbing closest player and spinning in a circle")
+                    logger.info("grabbing closest player and spinning in a circle")
                     game.io.tap(game.io.L1)
                     game.spin_in_circles(3)
                 elif (responseJson["match-status"] == "IN-MENU"):
-                    logger.debug("attempting to navigate the menu")
+                    logger.info("attempting to navigate the menu")
                     await attempt_navigate_menu(game, image)
             
             controller_input_thread_statistics.count += 1

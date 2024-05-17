@@ -34,9 +34,9 @@ async def infer_image_handler():
                 responseObjJson = json.loads(response) # Prompt expects templated json response
                 # TODO: What happens when the response isn't json?
                 await inferred_memory_stack.put([responseObjJson, image])
-                logger.debug("Inferred match-status is {}".format(responseObjJson["match-status"]))
+                logger.info("Inferred match-status is {}".format(responseObjJson["match-status"]))
             else:
-                logger.debug("There is not a latest screenshot to infer from")
+                logger.warning("There is not a latest screenshot to infer from")
             infer_image_thread_statistics.count += 1
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
