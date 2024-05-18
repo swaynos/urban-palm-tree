@@ -39,6 +39,7 @@ async def controller_input_handler(game: GameController):
                         logger.info("grabbing closest player and spinning in a circle")
                         game.io.tap(game.io.L1)
                         game.spin_in_circles(3)
+                        game.io.tap(game.io.Cross)
                 elif (responseJson["match-status"] == "IN-MENU"):
                     logger.info("attempting to navigate the menu")
                     await attempt_navigate_menu(game, image)
