@@ -25,18 +25,18 @@ async def controller_input_handler(game: GameController):
             # TODO: Only enter if the right window is active. (Annoying that keystrokes are entered while debugging)
             memory = None
             if (not inferred_memory_collection.empty()):
-                memory = inferred_memory_collection.peek_n_latest(1)
+                memory = inferred_memory_collection.peek_n_latest(1)[0]
             
             if memory is not None:
                 response = memory[0]
-                image = cast(ImageWrapper, memory[1])
-                if (response.get("match-status") == "IN-MATCH"
-                    and response.get("minimap") == "YES"):
+                # image = cast(ImageWrapper, memory[1])
+                if (response["match-status"] == "IN-MATCH"
+                    and response["minimap"] == "YES"):
                     logger.info("grabbing closest player and spinning in a circle for 3 seconds. Then tapping cross.")
                     game.io.tap(game.io.L1)
                     game.spin_in_circles(3)
 
-                if (response.get("match-status") != "IN-MENU"):
+                if (response["match-status"] != "IN-MENU"):
                     logger.info("tapping cross")
                     game.io.tap(game.io.Cross)
                 

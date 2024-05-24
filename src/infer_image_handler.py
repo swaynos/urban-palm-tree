@@ -39,14 +39,11 @@ async def infer_image_handler():
                 response = await parse_json_response(logger, response_str)
 
                 if (response!= None):
-                    await inferred_memory_collection.append([response, image])
-                    logger.info("Inferred match-status is {}".format(response.get("match-status")))
+                    inferred_memory_collection.append([response, image])
+                    logger.info("Inferred match-status is {}".format(response["match-status"]))
             else:
                 logger.warning("There is not a latest screenshot to infer from")
             
             await asyncio.sleep(0)  # Yield control back to the event loop
-        except json.JSONDecodeError as jsonDecodeError:
-            logger.error(f"Error parsing the json response: {response}")
-            logger.error(jsonDecodeError)
         except Exception as argument:
             logger.error(argument)
