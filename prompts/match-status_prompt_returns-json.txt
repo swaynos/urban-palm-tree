@@ -1,12 +1,11 @@
 This is a screenshot from the game EA FC 24. I need to know key details about the screenshot, you will provide an answer using a specific json template.
 First, you will tell me if the user is playing a match or if the user is navigating a menu. 
-While in a match, is the screenshot from an instant replay, or is it from a live match in progress?
+If in a match, is the screenshot from an instant replay within a match or the live action on the field??
 Then you will tell me if there is a minimap at the bottom of the screen or not?
 
 Answer only by using the following template.
 {
     "match-status" : "IN-MATCH" | "IN-MENU",
-    "live-match": "YES" | "NO",
-    "instant-replay" : "YES" | "NO",
+    "in-match-status": "NONE" | "INSTANT-REPLAY" | "LIVE-MATCH",
     "minimap" : "YES" | "NO"
 }
