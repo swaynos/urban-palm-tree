@@ -1,38 +1,30 @@
-from asyncio import Event, LifoQueue
+from queue import LifoQueue, Queue
+from threading import Lock
 
-# TODO: Consider defininig a new object to store screenshots and memory
-# Resources shared across all threads
-screenshots_stack: LifoQueue = LifoQueue(maxsize=10)
-inferred_memory_stack: LifoQueue = LifoQueue(maxsize=10)
-
-# Event object for determining when the application is ready to exit
-exit_event = Event()
-
-# Function to clear the oldest n elements from the LifoQueue
-async def clear_oldest_from_lifoqueue(q:LifoQueue, n:int):
+class ThreadSafeDeque(LifoQueue):
     """
-    This will only work so long as there is a single producer, 
-    with more than one producer I can imagine a race condition could exist
-    when trying to clear the stack while another producer inserts a new entity.
-    At the very least it will jeapordize the order of the stack. 
-    TODO: Consider defining a custom queue class that can be used for this purpose
+    A custom class for the queue that provides thread-safe operations for clearing the oldest elements. 
+    The LifoQueue from the queue module already provides thread safety for basic operations, 
+    but we'll extend it to handle custom clearing logic.
     """
-    if n > q.qsize():
-        raise IndexError("Cannot remove more items than are present")
-    
-    # Temporary list to hold elements
-    temp_list = []
+    def __init__(self, max_size):
+        super().__init__(maxsize=max_size)
+        self.lock = Lock()
 
-    # Transfer elements from LifoQueue to the list
-    while not q.empty():
-        temp_item = await q.get()
-        temp_list.append(temp_item)
+    def append(self, item):
+        with self.lock:
+            if self.full():
+                self.get()  # Remove the oldest element (bottom of the stack)
+            self.put(item)
 
-    # Remove the oldest elements (the last ones in the list)
-    if temp_list:
-        for i in range(n-1):
-            temp_list.pop()
+    def latest(self):
+        with self.lock:
+            return self.queue[-1] if not self.empty() else None
 
-    # Transfer the remaining elements back to the LifoQueue
-    for item in reversed(temp_list):
-        await q.put(item)
+    def get_n_latest(self, n):
+        with self.lock:
+            return list(self.queue)[-n:] if n <= self.qsize() else list(self.queue)
+
+# Resources shared across all tasks
+latest_screenshot = Queue(maxsize=1)
+inferred_memory_collection = ThreadSafeDeque(max_size=10)  # Replace 10 with the desired number of memories
