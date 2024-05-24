@@ -5,7 +5,7 @@ from time import time
 
 import config
 from image import ImageWrapper
-from shared_resources import clear_oldest_from_lifoqueue, exit_event, screenshots_stack
+from shared_resources import exit_event, latest_screenshot
 import monitoring
 
 capture_image_thread_statistics = monitoring.Statistics()
@@ -18,8 +18,9 @@ async def capture_image_handler(app):
     """
     logger = logging.getLogger(__name__)
     while(not exit_event.is_set()):
+        logger.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
+        capture_image_thread_statistics.count += 1
         try:
-            logger.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
             if platform == "darwin":
                 if not app.activate_app():
                     raise RuntimeError("darwin app activation failed")
@@ -35,11 +36,14 @@ async def capture_image_handler(app):
                 screenshotFilename = f"{config.SCREENSHOTS_DIR}new-screenshot{time()}.png"
                 image._image.save(screenshotFilename)
 
-            if screenshots_stack.full():
-                await clear_oldest_from_lifoqueue(screenshots_stack, 8)
+            # If the collection is full, attempt to remove images from the collection to free space.
+            # This needs to be a loop in case there are multiple threads adding screenshots to this
+            # collection at once.
+            while (latest_screenshot.full()):
+                await latest_screenshot.get()
 
-            await screenshots_stack.put(image)
-            capture_image_thread_statistics.count += 1
+            await latest_screenshot.put(image)
+
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
             logger.error(argument)

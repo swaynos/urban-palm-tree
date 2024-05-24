@@ -1,30 +1,36 @@
-from queue import LifoQueue, Queue
+from asyncio import Event, Queue
+from collections import deque
 from threading import Lock
 
-class ThreadSafeDeque(LifoQueue):
+class ThreadSafeDeque:
     """
-    A custom class for the queue that provides thread-safe operations for clearing the oldest elements. 
-    The LifoQueue from the queue module already provides thread safety for basic operations, 
-    but we'll extend it to handle custom clearing logic.
+    A custom class for a deque that provides thread-safe operations for appending items and
+    peeking at the last elements.
     """
-    def __init__(self, max_size):
-        super().__init__(maxsize=max_size)
+    def __init__(self, maxsize):
+        self.deque = deque(maxlen=maxsize)
         self.lock = Lock()
 
     def append(self, item):
         with self.lock:
-            if self.full():
-                self.get()  # Remove the oldest element (bottom of the stack)
-            self.put(item)
+            self.deque.append(item)  # Append will automatically discard the oldest if deque is full
 
     def latest(self):
         with self.lock:
-            return self.queue[-1] if not self.empty() else None
+            return self.deque[-1] if self.deque else None
 
-    def get_n_latest(self, n):
+    def empty(self):
         with self.lock:
-            return list(self.queue)[-n:] if n <= self.qsize() else list(self.queue)
+            return len(self.deque) == 0
+
+    def peek_n_latest(self, n):
+        with self.lock:
+            return list(self.deque)[-n:] if n <= len(self.deque) else list(self.deque)
+
 
 # Resources shared across all tasks
 latest_screenshot = Queue(maxsize=1)
-inferred_memory_collection = ThreadSafeDeque(max_size=10)  # Replace 10 with the desired number of memories
+inferred_memory_collection = ThreadSafeDeque(maxsize=10)  # Replace 10 with the desired number of memories
+
+# Event object for determining when the application is ready to exit
+exit_event = Event()

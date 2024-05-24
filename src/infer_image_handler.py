@@ -2,9 +2,9 @@ import asyncio
 import json
 import logging
 
-from inference import infer_image_from_ollama
+from inference import infer_image_from_ollama, parse_json_response
 import monitoring
-from shared_resources import exit_event, screenshots_stack, inferred_memory_stack
+from shared_resources import exit_event, latest_screenshot, inferred_memory_collection
 from app_io import get_prompt
 
 infer_image_thread_statistics = monitoring.Statistics()
@@ -18,26 +18,32 @@ async def infer_image_handler():
     logger = logging.getLogger(__name__)
     while(not exit_event.is_set()):
         try:
+            # Update statistics for monitoring purposes
+            logger.debug("Has looped {} times. Elapsed time is {}".format(infer_image_thread_statistics.count, infer_image_thread_statistics.get_time()))
+            infer_image_thread_statistics.count += 1
+
             image = None
-            memory = None
-            if (not screenshots_stack.empty()):
-                image = await screenshots_stack.get()
-            if (not inferred_memory_stack.empty()):
-                memory = inferred_memory_stack._queue[-1]
+            if (not latest_screenshot.empty()):
+                image = await latest_screenshot.get()
+
+            # Re-introduce this code if you want to use the last memory to enhance the prompt.
+            # memory = None
+            # if (not inferred_memory_collection.empty()):
+            #     memory = inferred_memory_collection.peek_n_latest(1)
+
             if(image != None):
-                logger.debug("Has looped {} times. Elapsed time is {}".format(infer_image_thread_statistics.count, infer_image_thread_statistics.get_time()))
                 logger.debug("inferring image from latest screenshot using ollama")
                 prompt = get_prompt("match-status_prompt_returns-json.txt")
-                if(memory is not None):
-                    prompt = prompt + f" In the last screenshot, your response was {memory}."
-                response = await infer_image_from_ollama(prompt, image.scaled_as_base64())
-                responseObjJson = json.loads(response) # Prompt expects templated json response
-                # TODO: What happens when the response isn't json?
-                await inferred_memory_stack.put([responseObjJson, image])
-                logger.info("Inferred match-status is {}".format(responseObjJson["match-status"]))
+   
+                response_str = await infer_image_from_ollama(prompt, image.scaled_as_base64())
+                response = await parse_json_response(logger, response_str)
+
+                if (response!= None):
+                    await inferred_memory_collection.append([response, image])
+                    logger.info("Inferred match-status is {}".format(response.get("match-status")))
             else:
                 logger.warning("There is not a latest screenshot to infer from")
-            infer_image_thread_statistics.count += 1
+            
             await asyncio.sleep(0)  # Yield control back to the event loop
         except json.JSONDecodeError as jsonDecodeError:
             logger.error(f"Error parsing the json response: {response}")

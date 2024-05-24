@@ -1,13 +1,13 @@
 import asyncio
 import json
 import logging
+from inference import infer_image_from_ollama
 import monitoring
 from typing import cast
 
 from app_io import get_prompt
 from game_controller import GameController
-from inference import infer_image_from_ollama
-from shared_resources import exit_event, inferred_memory_stack
+from shared_resources import exit_event, inferred_memory_collection
 from image import ImageWrapper
 controller_input_thread_statistics = monitoring.Statistics()
 
@@ -19,38 +19,34 @@ async def controller_input_handler(game: GameController):
     """
     logger = logging.getLogger(__name__)
     while(not exit_event.is_set()):
+        logger.debug(f"Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
+        controller_input_thread_statistics.count += 1
         try:
             # TODO: Only enter if the right window is active. (Annoying that keystrokes are entered while debugging)
-            logger.debug(f"Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
-            
             memory = None
-            if (not inferred_memory_stack.empty()):
-                memory = inferred_memory_stack._queue[-1]
+            if (not inferred_memory_collection.empty()):
+                memory = inferred_memory_collection.peek_n_latest(1)
             
             if memory is not None:
-                responseJson = memory[0]
+                response = memory[0]
                 image = cast(ImageWrapper, memory[1])
-                if (responseJson["match-status"] == "IN-MATCH"):
-                    if (responseJson["live-match"] == "NO" or responseJson["instant-replay"] == "YES"):
-                        logger.info("game is not in a live match, tapping cross")
-                        game.io.tap(game.io.Cross)
-                    else:
-                        # press, release, tap to send input to the controller. Joystick movement is special.
-                        logger.info("grabbing closest player and spinning in a circle")
-                        game.io.tap(game.io.L1)
-                        game.spin_in_circles(3)
-                        game.io.tap(game.io.Cross)
-                elif (responseJson["match-status"] == "IN-MENU"):
-                    logger.info("attempting to navigate the menu")
-                    await attempt_navigate_menu(game, image)
-            
-            controller_input_thread_statistics.count += 1
+                if (response.get("match-status") == "IN-MATCH"
+                    and response.get("minimap") == "YES"):
+                    logger.info("grabbing closest player and spinning in a circle for 3 seconds. Then tapping cross.")
+                    game.io.tap(game.io.L1)
+                    game.spin_in_circles(3)
+
+                if (response.get("match-status") != "IN-MENU"):
+                    logger.info("tapping cross")
+                    game.io.tap(game.io.Cross)
+                
+                #TODO: If the last 5 memories were IN-MENU, attempt to press cross to unblock the menu     
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
             logger.error(argument)
-            # Just tap cross and see what happens
-            game.io.tap(game.io.Cross)
 
+
+# TODO: This was some test code for menu navigation. Rearchitect this next step.
 async def attempt_navigate_menu(game: GameController, image: ImageWrapper):
     logger = logging.getLogger(__name__)
     # Squad Selection 2x2
