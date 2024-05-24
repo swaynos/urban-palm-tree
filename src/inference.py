@@ -22,22 +22,22 @@ async def infer_image_from_ollama(prompt: str, image_base64: str):
 
     return cleaned_response
 
-"""
-Parse a JSON string into an object.
-
-Args:
-    logger (logging.Logger): The logger to use for logging errors.
-    json_str (str): The JSON string to parse.
-
-Returns:
-    dict: A dictionary containing the parsed data.
-
-Raises:
-    It will not raise an error on validation failures, but it will log the error and return the parsed object.
-    JSONDecodeError: It will not raise an error, but will log the error and return None.
-    All other errors: It will log the error and return None
-"""
 async def parse_json_response(logger: logging.Logger, json_str: str):
+    """
+    Parse a JSON string into an object.
+
+    Args:
+        logger (logging.Logger): The logger to use for logging errors.
+        json_str (str): The JSON string to parse.
+
+    Returns:
+        dict: A dictionary containing the parsed data.
+
+    Raises:
+        It will not raise an error on validation failures, but it will log the error and return the parsed object.
+        JSONDecodeError: It will not raise an error, but will log the error and return None.
+        All other errors: It will log the error and return None
+    """
     try:
         json_obj = json.loads(json_str)
         # Validate the object

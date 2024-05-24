@@ -32,9 +32,8 @@ async def capture_image_handler(app):
 
             image = ImageWrapper(app.get_image_from_window())
             
-            if config.SAVE_SCREENSHOTS:
-                screenshotFilename = f"{config.SCREENSHOTS_DIR}new-screenshot{time()}.png"
-                image._image.save(screenshotFilename)
+            screenshot_filename = f"{config.SCREENSHOTS_DIR}new-screenshot{time()}.png"
+            await image.async_save_image(screenshot_filename)
 
             # If the collection is full, attempt to remove images from the collection to free space.
             # This needs to be a loop in case there are multiple threads adding screenshots to this

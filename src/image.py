@@ -1,3 +1,4 @@
+import aiofiles
 import numpy as np
 import base64
 import cv2
@@ -5,6 +6,10 @@ import io
 from PIL.Image import Image as PILImage
 
 from skimage.metrics import structural_similarity as ssim
+
+import config
+
+image_format = "PNG"
 
 def load_template_grayscale(template_name):
     """Load a grayscale template image from disk."""
@@ -24,6 +29,7 @@ class ImageWrapper:
             self._image = PILImage.fromarray(image)
         else:
             raise ValueError("Unsupported image type: must be a PIL.Image.Image or a numpy.ndarray")
+        self.saved_path = None
 
     # Image manipulation
     def scaled_as_base64(self, width=640, height=360, encoding ='utf-8'):
@@ -37,7 +43,7 @@ class ImageWrapper:
         scaled_image = self._image.resize((width, height))
         # Convert the image to bytes in memory
         image_bytes = io.BytesIO()
-        scaled_image.save(image_bytes, format="PNG")
+        scaled_image.save(image_bytes, format=image_format)
         image_base64 = base64.b64encode(image_bytes.getvalue()).decode(encoding)
         return image_base64
 
@@ -51,7 +57,7 @@ class ImageWrapper:
         cropped_img = self._image.crop((x, y, deltaX, deltaY))
         # Convert the image to bytes in memory
         image_bytes = io.BytesIO()
-        cropped_img.save(image_bytes, format="PNG")
+        cropped_img.save(image_bytes, format=image_format)
 
         image_base64 = base64.b64encode(image_bytes.getvalue()).decode(encoding)
         return image_base64
@@ -119,3 +125,21 @@ class ImageWrapper:
         norm_diff = np.linalg.norm(diff)
 
         return norm_diff
+    
+    async def async_save_image(self, path: str):
+        """
+        Asynchronously saves an image to a file.
+        
+        Parameters:
+            path (str): The path and filename of the output file.
+        """
+        if config.SAVE_SCREENSHOTS:
+            # Save the image to a BytesIO buffer
+            buffer = io.BytesIO()
+            self._image.save(buffer, format=image_format)
+            buffer.seek(0)
+
+            # Write the buffer content to a file asynchronously
+            async with aiofiles.open(path, 'wb') as out_file:
+                await out_file.write(buffer.read())
+                self.saved_path = path

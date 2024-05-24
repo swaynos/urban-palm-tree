@@ -5,6 +5,8 @@ APP_RESIZE_REQUIRED = False
 
 SAVE_SCREENSHOTS = True
 SCREENSHOTS_DIR = "screenshots/"
+# This will save the screenshot response from Ollama only if the image has been saved
+SAVE_SCREENSHOT_RESPONSE = True
 
 LOG_LEVEL = "ERROR"
 
