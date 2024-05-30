@@ -21,14 +21,7 @@ logging.basicConfig(level=config.LOG_LEVEL) # format='%(asctime)s - %(name)s - %
 
 # Begin Program
 app = RunningApplication()
-if platform == "darwin":
-    app.find_app(config.APP_NAME)
-    app.activate_app()
-    app.get_window()
-elif platform == "linux" or platform == "linux2":
-    app.find_window_by_name(config.APP_NAME)
-    app.activate_window()
-
+app.warm_up(config.APP_NAME)
 game = GameController()         
 
 # Define sigint/sigterm handler
@@ -42,6 +35,7 @@ def exit_handler(signum, frame):
     game.io.press(game.io.Lstick.Up)
     game.io.press(game.io.Lstick.Left)
     exit_event.set()
+    
 # Activate the handlers
 signal.signal(signal.SIGINT, exit_handler)
 signal.signal(signal.SIGTERM, exit_handler)
@@ -50,7 +44,7 @@ async def main():
     await asyncio.gather(
         capture_image_handler(app),
         infer_image_handler(),
-        controller_input_handler(game)
+        controller_input_handler(app, game)
     )
 
 if __name__ == "__main__":

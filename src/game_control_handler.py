@@ -3,16 +3,20 @@ import json
 import logging
 from inference import infer_image_from_ollama
 import monitoring
-from typing import cast
+from sys import platform
 
 from app_io import get_prompt
 from game_controller import GameController
 from shared_resources import exit_event, inferred_memory_collection
+if platform == "darwin":
+    from macos_app import RunningApplication
+elif platform == "linux" or platform == "linux2":
+    from linux_app import RunningApplication
 from image import ImageWrapper
 controller_input_thread_statistics = monitoring.Statistics()
 
 # TODO: Check for active application before sending
-async def controller_input_handler(game: GameController):
+async def controller_input_handler(app: RunningApplication, game: GameController):
     """
     In this thread we will read input from a controller (a Playstation Controller, but could be any other type of controller) and perform actions based on that input.
     It uses the `controller` module to grab the latest input data for each button on the controller and performs actions based on those inputs.
@@ -29,7 +33,6 @@ async def controller_input_handler(game: GameController):
             
             if memory is not None:
                 response = memory[0]
-                # image = cast(ImageWrapper, memory[1])
                 if (response["match-status"] == "IN-MATCH"
                     and response["minimap"] == "YES"):
                     logger.info("grabbing closest player and spinning in a circle for 3 seconds. Then tapping cross.")

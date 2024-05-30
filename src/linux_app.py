@@ -11,6 +11,13 @@ class RunningApplication():
     def __init__(self):
          self.window_id = None
     
+    def warm_up(self, app_name):
+        self.find_window_by_name(app_name)
+        self.activate_window()
+
+    def activate(self):
+        self.activate_window()
+
     def find_window_by_name(self, window_name):
         display = Display()
         root = display.screen().root
@@ -35,7 +42,7 @@ class RunningApplication():
         search(root)
         self.window_id = window_id
         return window_id
-    
+
     def activate_window(self):
         if (not self.window_id):
             raise ValueError("window_id must be set, try running find_window_by_name before activate_window")
@@ -47,8 +54,6 @@ class RunningApplication():
         window.configure(stack_mode=X.Above)
 
         d.sync()
-
-        return True
 
     def get_image_from_window(self):
         if (not self.window_id):

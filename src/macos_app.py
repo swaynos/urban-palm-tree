@@ -19,6 +19,14 @@ class RunningApplication():
          self.pid = None
          self.window = None
     
+    def warm_up(self, app_name):
+        self.find_app()
+        self.activate_app()
+        self.get_window()
+
+    def activate(self):
+        self.activate_app()
+
     def find_app(self, appName):
         """
         Returns an application object from AppKit if the application with the given name is running, otherwise None.
@@ -61,8 +69,7 @@ class RunningApplication():
             activationResult = self.app.activateWithOptions_(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)
 
             if not (activationResult):
-                return False
-        return True
+                raise RuntimeError("darwin app activation failed")
 
     def get_window(self) -> Window: 
         if (not self.pid):

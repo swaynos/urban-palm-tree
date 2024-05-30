@@ -5,12 +5,16 @@ from time import time
 
 import config
 from image import ImageWrapper
+if platform == "darwin":
+    from macos_app import RunningApplication
+elif platform == "linux" or platform == "linux2":
+    from linux_app import RunningApplication
 from shared_resources import exit_event, latest_screenshot
 import monitoring
 
 capture_image_thread_statistics = monitoring.Statistics()
 
-async def capture_image_handler(app):
+async def capture_image_handler(app: RunningApplication):
     """
     In this thread we will capture a screenshot of the desired application and stores it in a global variable for later use.
     It uses the `get_window` and `ImageWrapper` functions from the `app_io` module to grab the window and create an image object.
@@ -21,12 +25,7 @@ async def capture_image_handler(app):
         logger.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
         capture_image_thread_statistics.count += 1
         try:
-            if platform == "darwin":
-                if not app.activate_app():
-                    raise RuntimeError("darwin app activation failed")
-                app.get_window()
-            elif platform == "linux" or platform == "linux2":
-                app.activate_window()
+            app.activate()
             
             logger.debug("capture_image_thread: Grabbing a screenshot")
 
