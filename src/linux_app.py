@@ -2,7 +2,7 @@ import config
 import logging
 import os
 import pyscreenshot as ImageGrab
-from Xlib import X, display
+from Xlib import X
 from Xlib.display import Display
 from Xlib.protocol.event import ClientMessage
 from Xlib.protocol.request import QueryTree
@@ -12,11 +12,26 @@ class RunningApplication():
          self.window_id = None
     
     def warm_up(self, app_name):
+        self.app_name = app_name
         self.find_window_by_name(app_name)
         self.activate_window()
 
     def activate(self):
         self.activate_window()
+
+    def is_app_active(self) -> bool:
+        if (not self.app):
+            raise ValueError("app must be set, try running find_app before calling is_app_active_frontmost")
+        
+        d = Display()
+
+        # Get the currently focused window
+        focused_window = d.get_input_focus().focus
+
+        if focused_window == self.window_id:
+            return True
+        
+        return False
 
     def find_window_by_name(self, window_name):
         display = Display()

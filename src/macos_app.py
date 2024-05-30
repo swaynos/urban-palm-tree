@@ -15,17 +15,25 @@ class Window:
 
 class RunningApplication():
     def __init__(self):
-         self.app = None
+         self.app: NSRunningApplication = None
+         self.app_name = None
          self.pid = None
          self.window = None
     
     def warm_up(self, app_name):
-        self.find_app()
+        self.app_name = app_name
+        self.find_app(app_name)
         self.activate_app()
         self.get_window()
 
     def activate(self):
         self.activate_app()
+
+    def is_app_active(self) -> bool:
+        if (not self.app):
+            raise ValueError("app must be set, try running find_app before calling is_app_active_frontmost")
+        active_app = NSWorkspace.sharedWorkspace().frontmostApplication().localizedName()
+        return self.app_name == active_app
 
     def find_app(self, appName):
         """
@@ -57,19 +65,12 @@ class RunningApplication():
             raise ValueError("app must be set, try running find_app before activate_app")
 
         # app.isActive: Indicates whether the application is currently frontmost.
-        if not (self.app.isActive()):
-            logging.debug("{} is not active, attempting to active. Activation Policy = {}.".format(config.APP_NAME, self.app.activationPolicy()))
-            """
-            Activation Policy: https://developer.apple.com/documentation/appkit/nsapplicationactivationpolicy?language=objc
-            ActivationPolicy = 0: The application is activated when it becomes frontmost.
-
-            TODO: isActive() is not behaving as expected, forcing use of activateWithOptions instead of prompting the user to take action.
-            This works for now, but could become a pain point in the future.
-            """
+        if not (self.is_app_active()):
+            logging.debug("{} is not active, attempting to activate.".format(config.APP_NAME))
             activationResult = self.app.activateWithOptions_(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)
 
             if not (activationResult):
-                raise RuntimeError("darwin app activation failed")
+                raise RuntimeError("macOS app activation failed")
 
     def get_window(self) -> Window: 
         if (not self.pid):
