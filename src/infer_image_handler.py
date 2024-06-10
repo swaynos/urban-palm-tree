@@ -37,7 +37,7 @@ async def infer_image_handler():
                 logger.debug("inferring image from latest screenshot using ollama")
                 prompt = get_prompt("match-status_prompt_returns-json.txt")
    
-                response_str = await infer_image_from_ollama(prompt, image.scaled_as_base64())
+                response_str = await infer_image_from_ollama(prompt, image.scaled_as_base64(width=1280, height=720))
                 response = await parse_json_response(logger, response_str)
 
                 if (response is not None):

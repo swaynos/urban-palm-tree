@@ -39,10 +39,11 @@ async def controller_input_handler(app: RunningApplication, game: GameController
                     game.io.tap(game.io.L1)
                     game.spin_in_circles(3)
 
-                if (response["match-status"] != "IN-MENU"):
+                if (response["match-status"] == "IN-MENU"):
+                    await attempt_navigate_menu(game, memory[1])
                     logger.info("tapping cross")
                     game.io.tap(game.io.Cross)
-                
+                    
                 #TODO: If the last 5 memories were IN-MENU, attempt to press cross to unblock the menu     
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
@@ -53,23 +54,24 @@ async def controller_input_handler(app: RunningApplication, game: GameController
 async def attempt_navigate_menu(game: GameController, image: ImageWrapper):
     logger = logging.getLogger(__name__)
     # Squad Selection 2x2
-    cropped_image_base64 = image.return_region_as_base64(70,310,145,145)
-    response = await infer_image_from_ollama(get_prompt("menu-four-logos_prompt_returns-sequence.txt"), cropped_image_base64)
-    try:
-        responseJson = json.loads(response)
-    except json.JSONDecodeError:
-        logger.error(response)
-        responseJson = False
-    if responseJson:
-        for move in responseJson:
-            logger.info(f"tapping {move}")
-            if move == "LEFT":
-                game.io.tap(game.io.DPadLeft)
-            elif move == "RIGHT":
-                game.io.tap(game.io.DPadRight)
-            elif move == "UP":
-                game.io.tap(game.io.DPadUp)
-            elif move == "DOWN":
-                game.io.tap(game.io.DPadDown)
-            elif move == "ENTER":
-                game.io.tap(game.io.Cross)
+    # cropped_image_base64 = image.return_region_as_base64(70,310,145,145)
+    response = await infer_image_from_ollama(get_prompt("menu-is-squad-battles.txt"), image.scaled_as_base64(width=1280, height=720)) #cropped_image_base64)
+    print (response)
+    # try:
+    #     responseJson = json.loads(response)
+    # except json.JSONDecodeError:
+    #     logger.error(response)
+    #     responseJson = False
+    # if responseJson:
+    #     for move in responseJson:
+    #         logger.info(f"tapping {move}")
+    #         if move == "LEFT":
+    #             game.io.tap(game.io.DPadLeft)
+    #         elif move == "RIGHT":
+    #             game.io.tap(game.io.DPadRight)
+    #         elif move == "UP":
+    #             game.io.tap(game.io.DPadUp)
+    #         elif move == "DOWN":
+    #             game.io.tap(game.io.DPadDown)
+    #         elif move == "ENTER":
+    #             game.io.tap(game.io.Cross)
