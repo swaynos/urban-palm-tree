@@ -1,11 +1,32 @@
-This is a screenshot from the game EA FC 24. I need to know key details about the screenshot, you will provide an answer using a specific json template.
-First, you will tell me if the user is playing a match or if the user is navigating a menu. 
-If in a match, is the screenshot from an instant replay within a match or the live action on the field??
-Then you will tell me if there is a minimap at the bottom of the screen or not?
+This is a screenshot from the game EA FC 24. I need to know key details about the screenshot, you will give an answer using only the specified json template. You will answer with this json only.
 
-Answer only by using the following template.
+- Is this screenshot of EA FC 24 of the game in a menu or in a match?
+
+In Match Questions
+- What is the score?
+- Is there a minimap present at the bottom of the screen?
+- Is the ball actively in play?
+- Is it an instant replay within a match or the live action on the field?
+
+In Menu Questions
+- Is the squad battles opponent selection visible in this EA FC 24 menu screenshot?
+- If there is a score visible, what was the score?
+- Is this screenshot from the half-time menu in EA FC 24?
+- Is this screenshot from the full-time menu in EA FC 24?
+- Is the instant replay user interface visible?
+
+Use the following template as your reply if this is a screenshot from a match that is in progress.
 {
-    "match-status" : "IN-MATCH" | "IN-MENU",
+    "match-status" : "IN-MATCH",
+    "score": "ABC:0 - XYZ:0"
     "in-match-status": "NONE" | "INSTANT-REPLAY" | "LIVE-MATCH",
+    "ball-active" : "YES" | "NO",
     "minimap" : "YES" | "NO"
+}
+
+Use the following template as your reply if this is a screenshot in a menu and not in a match.
+{
+    "match-status" : "IN-MENU",
+    "in-menu-status": "UNKNOWN" | "SQUAD-BATTLES-OPPONENT-SELECTION" | "INSTANT-REPLAY" | "HALF-TIME" | "FULL-TIME",
+    "visible-score": "ABC:0 - XYZ:0"
 }
