@@ -91,13 +91,15 @@ async def parse_json_response(logger: logging.Logger, json_str: str) -> Optional
     json_str = await preprocess_json_string(json_str)
     try:
         json_obj = json.loads(json_str)
-        # Validate and clean the object
+        json_obj_keys = json_obj.keys()
 
         # match-status
         match_status = json_obj["match-status"].upper()
         if match_status not in {"IN-MATCH", "IN-MENU"}:
             logger.warn(f"Invalid match-status: {match_status}, 'match-status' is expected to be one of: IN-MATCH, IN-MENU")
-            json_obj["match-status"] = None
+
+        if "in-match-status" in json_obj_keys:
+                json_obj["match-status"] = None
         
         # in-menu-status
         in_menu_status = json_obj.get("in-menu-status")
@@ -113,14 +115,19 @@ async def parse_json_response(logger: logging.Logger, json_str: str) -> Optional
 
         # in-match-status
         in_match_status = json_obj.get("in-match-status", "").upper()
-        if in_match_status and in_match_status not in {"NONE", "INSTANT-REPLAY", "LIVE-MATCH"}:
-            logger.warn(f"Invalid match-status: {in_match_status}, 'match-status' is expected to be one of: NONE, INSTANT-REPLAY, LIVE-MATCH")
+            if in_match_status and in_match_status not in {"NONE", "INSTANT-REPLAY", "LIVE-MATCH"}:
+                logger.warn(f"Invalid match-status: {in_match_status}, 'match-status' is expected to be one of: NONE, INSTANT-REPLAY, LIVE-MATCH")
             json_obj["in-match-status"] = None
         
         # minimap
-        minimap = json_obj.get("minimap", "").upper()
-        if minimap and minimap not in {"YES", "NO"}:
-            logger.warn(f"Invalid minimap: {minimap}, 'match-status' is expected to be one of: YES, NO")
+        if "in-menu-status" in json_obj_keys:
+            in_menu_status = json_obj["in-menu-status"].upper()
+            if in_menu_status not in {"UNKNOWN", "SQUAD-BATTLES-OPPONENT-SELECTION"}:
+                logger.error(f"Invalid value for 'in-menu-status': {in_menu_status}. 'in-menu-status' must be one of: NONE, IN-MENU")
+        if "minimap" in json_obj_keys:
+            minimap = json_obj.get("minimap", "").upper()
+            if minimap and minimap not in {"YES", "NO"}:
+                logger.warn(f"Invalid minimap: {minimap}, 'match-status' is expected to be one of: YES, NO")
             json_obj["minimap"] = None
         
         return json_obj
