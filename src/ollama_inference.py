@@ -4,10 +4,9 @@ import aiohttp
 import json
 import re
 
-import config
+from . import config
 
 # Define your response mappings
-# TODO: refine these as needed
 nlp_response_mappings = {
     r".*main menu.*": "IN-MENU", ##
     r".*selecting opponent.*squad battles.*": "IN-MENU-SQUAD-BATTLES-OPPONENT-SELECT",
@@ -115,9 +114,9 @@ async def parse_json_response(logger: logging.Logger, json_str: str) -> Optional
 
         # in-match-status
         in_match_status = json_obj.get("in-match-status", "").upper()
-            if in_match_status and in_match_status not in {"NONE", "INSTANT-REPLAY", "LIVE-MATCH"}:
-                logger.warn(f"Invalid match-status: {in_match_status}, 'match-status' is expected to be one of: NONE, INSTANT-REPLAY, LIVE-MATCH")
-            json_obj["in-match-status"] = None
+        if in_match_status and in_match_status not in {"NONE", "INSTANT-REPLAY", "LIVE-MATCH"}:
+            logger.warn(f"Invalid match-status: {in_match_status}, 'match-status' is expected to be one of: NONE, INSTANT-REPLAY, LIVE-MATCH")
+        json_obj["in-match-status"] = None
         
         # minimap
         if "in-menu-status" in json_obj_keys:
