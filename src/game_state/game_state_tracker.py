@@ -1,4 +1,4 @@
-from game_state import GameState, MenuState, MatchState
+from . import GameState, MenuState, MatchState
 
 class GameStateTracker:
     
