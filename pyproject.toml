@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "urban-palm-tree"
-version = "0.1.0"
+version = "0.2.0"
 description = "Your project description goes here."
-authors = ["Your Name"]
+authors = ["John Paul Swaynos"]
 package-mode = false 
 
 [tool.poetry.dependencies]
-python = ">=3.11"
+python = ">=3.10, <3.11"
 pyobjc = {version="^10.2", platform = "darwin"}
 pyobjc-framework-screencapturekit = {version="^10.2",platform = "darwin"}
 pyscreenshot = "^3.1"
@@ -19,3 +19,6 @@ requests = "^2.31.0"
 python-xlib = "^0.33"
 aiohttp = "^3.9.5"
 aiofiles = "^23.2.1"
+tensorflow-metal = {markers = "sys_platform == \"darwin\" and platform_machine == \"arm64\"", version = "^1.1.0"}
+tensorflow-io-gcs-filesystem = "^0.37.1"
+tensorflow = "2.16.2"
