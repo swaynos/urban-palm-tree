@@ -27,22 +27,22 @@ async def controller_input_handler(app: RunningApplication, game: GameController
         controller_input_thread_statistics.count += 1
         try:
             # TODO: Only enter if the right window is active. (Annoying that keystrokes are entered while debugging)
-            memory = None
-            if (not inferred_memory_collection.empty()):
-                memory = inferred_memory_collection.peek_n_latest(1)[0]
+            # memory = None
+            # if (not inferred_memory_collection.empty()):
+            #     memory = inferred_memory_collection.peek_n_latest(1)[0]
             
-            if memory is not None:
-                response = memory[0]
-                if (response["match-status"] == "IN-MATCH"
-                    and response["minimap"] == "YES"):
-                    logger.info("grabbing closest player and spinning in a circle for 3 seconds. Then tapping cross.")
-                    game.io.tap(game.io.L1)
-                    game.spin_in_circles(3)
+            # if memory is not None:
+            #     response = memory[0]
+            #     if (response["match-status"] == "IN-MATCH"
+            #         and response["minimap"] == "YES"):
+            #         logger.info("grabbing closest player and spinning in a circle for 3 seconds. Then tapping cross.")
+            #         game.io.tap(game.io.L1)
+            #         game.spin_in_circles(3)
 
-                if (response["match-status"] == "IN-MENU"):
-                    await attempt_navigate_menu(game, memory[1])
-                    logger.info("tapping cross")
-                    game.io.tap(game.io.Cross)
+            #     if (response["match-status"] == "IN-MENU"):
+            #         await attempt_navigate_menu(game, memory[1])
+            #         logger.info("tapping cross")
+            #         game.io.tap(game.io.Cross)
                     
                 #TODO: If the last 5 memories were IN-MENU, attempt to press cross to unblock the menu     
             await asyncio.sleep(0)  # Yield control back to the event loop
