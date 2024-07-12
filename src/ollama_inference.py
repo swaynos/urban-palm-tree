@@ -4,7 +4,7 @@ import aiohttp
 import json
 import re
 
-import src.config
+import src.config as config
 
 # Define your response mappings
 # TODO: refine these as needed
