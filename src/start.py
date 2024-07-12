@@ -17,7 +17,7 @@ from game_controller import GameController
 import config
 
 # configure logging for the application
-logging.basicConfig(level=config.LOG_LEVEL) # format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=config.LOG_LEVEL, format='%(asctime)s - %(levelname)s - %(message)s', filename='start.log', filemode='w')
 
 # Begin Program
 app = RunningApplication()

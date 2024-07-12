@@ -5,6 +5,7 @@ import logging
 import config
 from image import ImageWrapper
 from ollama_inference import infer_image_from_ollama, parse_json_response
+from image_classification_inference import ImageClassifier
 import monitoring
 from shared_resources import exit_event, latest_screenshot, inferred_memory_collection
 from app_io import get_prompt
@@ -18,6 +19,12 @@ async def infer_image_handler():
     The inferred image is then stored in a global variable for later use, ensuring that only one thread can access it at a time.
     """
     logger = logging.getLogger(__name__)
+
+    # Initialize the menu vs. match image classifier
+    menu_vs_match_class_labels = ['in-match', 'in-menu']
+    menu_vs_match_modelpath = "menu_vs_match_model.h5"
+    image_classifier = ImageClassifier(menu_vs_match_modelpath, menu_vs_match_class_labels)
+
     while(not exit_event.is_set()):
         try:
             # Update statistics for monitoring purposes
@@ -34,20 +41,23 @@ async def infer_image_handler():
             #     memory = inferred_memory_collection.peek_n_latest(1)
 
             if(image is not None):
-                logger.debug("inferring image from latest screenshot using ollama")
-                prompt = get_prompt("match-status_prompt_returns-json.txt")
+                #logger.debug("inferring image from latest screenshot using ollama")
+                #prompt = get_prompt("match-status_prompt_returns-json.txt")
    
-                response_str = await infer_image_from_ollama(prompt, image.scaled_as_base64(width=1280, height=720))
-                response = await parse_json_response(logger, response_str)
+                # response_str = await infer_image_from_ollama(prompt, image.scaled_as_base64(width=1280, height=720))
+                # response = await parse_json_response(logger, response_str)
 
-                if (response is not None):
-                    inferred_memory_collection.append([response, image])
-                    logger.info("Inferred match-status is {}".format(response["match-status"]))
+                # if (response is not None):
+                #     inferred_memory_collection.append([response, image])
+                #     logger.info("Inferred match-status is {}".format(response["match-status"]))
                 
-                if (config.SAVE_SCREENSHOT_RESPONSE and image.saved_path is not None):
-                    save_path = image.saved_path.replace(".png", "-response.json")
-                    async with aiofiles.open(save_path, 'w') as out_file:
-                        await out_file.write(response_str)
+                # if (config.SAVE_SCREENSHOT_RESPONSE and image.saved_path is not None):
+                #     save_path = image.saved_path.replace(".png", "-response.json")
+                #     async with aiofiles.open(save_path, 'w') as out_file:
+                #         await out_file.write(response_str)
+                logger.debug(f"inferring image from latest screenshot using {menu_vs_match_modelpath}")
+                response = await image_classifier.classify_image(image)
+                logger.info(f"Inferred match-status is {response}")
             else:
                 logger.warning("There is not a latest screenshot to infer from")
             
