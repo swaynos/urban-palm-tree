@@ -4,6 +4,7 @@ import logging
 
 import config
 from game_state.game_state import GameState, get_game_states
+from game_state.menu_state import MenuState, get_menu_states
 from image import ImageWrapper
 from image_classification_inference import ImageClassifier
 import monitoring
@@ -22,9 +23,9 @@ async def infer_image_handler():
 
     # Initialize the menu vs. match image classifier
     menu_vs_match_classes = get_game_states()
-    menu_vs_match_modelpath = "menu_vs_match_model.h5"
-    image_classifier = ImageClassifier(menu_vs_match_modelpath, menu_vs_match_classes)
-
+    menu_states_classes = get_menu_states()
+    game_status_image_classifier = ImageClassifier(config.MENU_VS_MATCH_MODELPATH, menu_vs_match_classes)
+    menu_status_image_classifier = ImageClassifier(config.IN_MENU_CLASSIFICATION_MODELPATH, menu_states_classes)
     while(not exit_event.is_set()):
         try:
             # Update statistics for monitoring purposes
@@ -50,15 +51,16 @@ async def infer_image_handler():
                 #     save_path = image.saved_path.replace(".png", "-response.json")
                 #     async with aiofiles.open(save_path, 'w') as out_file:
                 #         await out_file.write(response_str)
-                logger.debug(f"inferring image from latest screenshot using {menu_vs_match_modelpath}")
-                response = await image_classifier.classify_image(image)
-
+                game_status_response = await game_status_image_classifier.classify_image(image)
+                
                 # Append the current inferred state as a tuple
                 inferred_state = {
-                    'GameState': response.name,
+                    'GameState': game_status_response.name,
                     'MenuState': None,
                     'MatchState': None,
                 }
+                logger.info(f"The currently inferred state of the game is {game_status_response.name}")
+
                 inferred_memory_collection.append(inferred_state)
 
                 # Check if all the latest inferred states are the same
@@ -71,11 +73,31 @@ async def infer_image_handler():
                         # TODO: MenuState and MatchState?
                     last_state = state
                 if all_states_equal:
-                    await inferred_game_state.update_data(inferred_state)
-                # TODO: Consider a more robust strategy that uses the internal score from classify_image() to determine if the state has changed, or at least provide weight to the most recent states.
+                    logger.info(f"The last 10 inferred states are all the same: {last_state['GameState']}.")
+                    if inferred_state['GameState'] == GameState.IN_MENU.name:
+                        menu_status_response = await menu_status_image_classifier.classify_image(image)
 
-                logger.info(f"Inferred match-status is {response.name}")
-                logger.info(f"The inferred_state of the game is: {await inferred_game_state.read_data()}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        inferred_state['MenuState'] = menu_status_response.name
+                        logger.info(f"The currently inferred menu state of the game is {menu_status_response.name}")
+                    logger.info(f"Updating the shared inferred_game_state.")
+                    await inferred_game_state.update_data(inferred_state)
+            
+                # TODO: Consider a more robust strategy that uses the internal score from classify_image() to determine if the state has changed, or at least provide weight to the most recent states.
             else:
                 logger.warning("There is not a latest screenshot to infer from")
             

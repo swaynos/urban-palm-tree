@@ -7,7 +7,8 @@ from sys import platform
 
 from app_io import get_prompt
 from game_controller import GameController
-from shared_resources import exit_event, inferred_memory_collection
+from game_state import GameState, MenuState
+from shared_resources import exit_event, inferred_memory_collection, inferred_game_state
 if platform == "darwin":
     from macos_app import RunningApplication
 elif platform == "linux" or platform == "linux2":
@@ -26,6 +27,21 @@ async def controller_input_handler(app: RunningApplication, game: GameController
         logger.debug(f"Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
         controller_input_thread_statistics.count += 1
         try:
+            current_game_state = await inferred_game_state.read_data()
+
+            if current_game_state is not None and current_game_state['GameState'] == GameState.IN_MATCH.name:
+                logging.info("Game is in match, not sending controller input")
+                # TODO: Do something in-match
+            elif current_game_state is not None and current_game_state['GameState'] == GameState.IN_MENU.name:
+                if (current_game_state['MenuState'] == MenuState.SQUAD_BATTLES_OPPONENT_SELECTION.name):
+                    logging.info(f"Game is at the {current_game_state['MenuState']}")
+                    # TODO: Do something in the opponent selection menu
+                    #
+                    #
+                elif (current_game_state['MenuState'] != MenuState.UNKNOWN.name):
+                    logging.info(f"Game is at the {current_game_state['MenuState']}. Tapping cross.")
+                    game.io.tap(game.io.Cross)
+                
             # TODO: Only enter if the right window is active. (Annoying that keystrokes are entered while debugging)
             # memory = None
             # if (not inferred_memory_collection.empty()):
@@ -44,7 +60,8 @@ async def controller_input_handler(app: RunningApplication, game: GameController
             #         logger.info("tapping cross")
             #         game.io.tap(game.io.Cross)
                     
-                #TODO: If the last 5 memories were IN-MENU, attempt to press cross to unblock the menu     
+                #TODO: If the last 5 memories were IN-MENU, attempt to press cross to unblock the menu 
+            await asyncio.sleep(5)  # TODO: Remove
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
             logger.error(argument)

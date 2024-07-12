@@ -1,10 +1,15 @@
+import logging
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import asyncio
 
+logger = logging.getLogger(__name__)
+
 class ImageClassifier:
+
     def __init__(self, model_path, class_labels, target_resolution=(480, 270)):
+        self.modelpath = model_path
         self.model = tf.keras.models.load_model(model_path)
         # Compile the loaded model specifying metrics
         self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -14,6 +19,7 @@ class ImageClassifier:
         self.datagen = ImageDataGenerator(rescale=1./255)
 
     async def classify_image(self, image_wrapper):
+        logger.debug(f"Classifying image from latest screenshot using {self.modelpath}")
         img = await self.load_and_preprocess_image(image_wrapper)
         prediction = await asyncio.to_thread(self.model.predict, img)
 
