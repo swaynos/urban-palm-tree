@@ -3,11 +3,11 @@ import asyncio
 import logging
 
 import config
+from game_state.game_state import GameState, get_game_states
 from image import ImageWrapper
-from ollama_inference import infer_image_from_ollama, parse_json_response
 from image_classification_inference import ImageClassifier
 import monitoring
-from shared_resources import exit_event, latest_screenshot, inferred_memory_collection
+from shared_resources import exit_event, latest_screenshot, inferred_game_state, inferred_memory_collection
 from app_io import get_prompt
 
 infer_image_thread_statistics = monitoring.Statistics()
@@ -21,9 +21,9 @@ async def infer_image_handler():
     logger = logging.getLogger(__name__)
 
     # Initialize the menu vs. match image classifier
-    menu_vs_match_class_labels = ['in-match', 'in-menu']
+    menu_vs_match_classes = get_game_states()
     menu_vs_match_modelpath = "menu_vs_match_model.h5"
-    image_classifier = ImageClassifier(menu_vs_match_modelpath, menu_vs_match_class_labels)
+    image_classifier = ImageClassifier(menu_vs_match_modelpath, menu_vs_match_classes)
 
     while(not exit_event.is_set()):
         try:
@@ -34,11 +34,6 @@ async def infer_image_handler():
             image: ImageWrapper = None
             if (not latest_screenshot.empty()):
                 image = await latest_screenshot.get()
-
-            # Re-introduce this code if you want to use the last memory to enhance the prompt.
-            # memory = None
-            # if (not inferred_memory_collection.empty()):
-            #     memory = inferred_memory_collection.peek_n_latest(1)
 
             if(image is not None):
                 #logger.debug("inferring image from latest screenshot using ollama")
@@ -57,7 +52,30 @@ async def infer_image_handler():
                 #         await out_file.write(response_str)
                 logger.debug(f"inferring image from latest screenshot using {menu_vs_match_modelpath}")
                 response = await image_classifier.classify_image(image)
-                logger.info(f"Inferred match-status is {response}")
+
+                # Append the current inferred state as a tuple
+                inferred_state = {
+                    'GameState': response.name,
+                    'MenuState': None,
+                    'MatchState': None,
+                }
+                inferred_memory_collection.append(inferred_state)
+
+                # Check if all the latest inferred states are the same
+                latest_states = inferred_memory_collection.peek_n_latest(10)
+                all_states_equal = True
+                last_state = None
+                for state in latest_states:
+                    if last_state is not None:
+                        all_states_equal = all_states_equal and state['GameState'] == last_state['GameState']
+                        # TODO: MenuState and MatchState?
+                    last_state = state
+                if all_states_equal:
+                    await inferred_game_state.update_data(inferred_state)
+                # TODO: Consider a more robust strategy that uses the internal score from classify_image() to determine if the state has changed, or at least provide weight to the most recent states.
+
+                logger.info(f"Inferred match-status is {response.name}")
+                logger.info(f"The inferred_state of the game is: {await inferred_game_state.read_data()}")
             else:
                 logger.warning("There is not a latest screenshot to infer from")
             

@@ -4,7 +4,11 @@ import aiohttp
 import json
 import re
 
-import config
+import config as config
+import game_state.menu_state as menu_state
+from game_state.game_state import get_game_states_str
+from game_state.match_state import get_match_states_str
+from game_state.menu_state import get_menu_states_str
 
 # Define your response mappings
 # TODO: refine these as needed
@@ -87,50 +91,55 @@ async def parse_json_response(logger: logging.Logger, json_str: str) -> Optional
         It will not raise an error on validation failures, but it will log the error and return the parsed object.
         JSONDecodeError: It will not raise an error, but will log the error and return None.
         All other errors: It will log the error and return None
+
+    Note:
+        The function will parse the input JSON string, extract specific values based on keys, 
+        perform validations, and return a dictionary with the parsed data. 
+        Errors encountered during parsing will be logged and the function will return None.
     """
     json_str = await preprocess_json_string(json_str)
     try:
         json_obj = json.loads(json_str)
-        json_obj_keys = json_obj.keys()
+        json_obj_keys = {key.lower(): value for key, value in json_obj.items()}
+
+        parsed_json = {}
 
         # match-status
-        match_status = json_obj["match-status"].upper()
-        if match_status not in {"IN-MATCH", "IN-MENU"}:
-            logger.warn(f"Invalid match-status: {match_status}, 'match-status' is expected to be one of: IN-MATCH, IN-MENU")
-
-        if "in-match-status" in json_obj_keys:
-                json_obj["match-status"] = None
-        
-        # in-menu-status
-        in_menu_status = json_obj.get("in-menu-status")
-        if isinstance(in_menu_status, str):
-            in_menu_status = in_menu_status.upper()
-        elif isinstance(in_menu_status, list):
-            in_menu_status = [item.upper() for item in in_menu_status]
+        if "match-status" in json_obj_keys:
+            match_status = json_obj.get("match-status", "").upper()
+            if match_status not in get_game_states_str():
+                logger.warn(f"Invalid match-status: {match_status}, 'match-status' is expected to be one of: {get_game_states_str()}")
+            parsed_json["match-status"] = match_status
         else:
-            in_menu_status = ""
-
-        if in_menu_status and any(status not in {"SQUAD-BATTLES-OPPONENT-SELECTION", "UNKNOWN"} for status in in_menu_status if isinstance(in_menu_status, list)):
-            json_obj["in-menu-status"] = None
+            parsed_json["match-status"] = None
 
         # in-match-status
-        in_match_status = json_obj.get("in-match-status", "").upper()
-        if in_match_status and in_match_status not in {"NONE", "INSTANT-REPLAY", "LIVE-MATCH"}:
-            logger.warn(f"Invalid match-status: {in_match_status}, 'match-status' is expected to be one of: NONE, INSTANT-REPLAY, LIVE-MATCH")
-        json_obj["in-match-status"] = None
+        if "in-match-status" in json_obj_keys:
+            in_match_status = json_obj.get("in-match-status", "").upper()
+            if in_match_status and in_match_status not in get_match_states_str():
+                logger.warn(f"Invalid in-match-status: {in_match_status}, 'in-match-status' is expected to be one of: {get_match_states_str()}")
+            parsed_json["in-match-status"] = in_match_status
+        else:
+            parsed_json["in-match-status"] = None
+
+        if "in-menu-status" in json_obj_keys:
+            in_menu_status = json_obj.get("in-menu-status", "").upper()
+            if in_menu_status and in_menu_status not in get_menu_states_str():
+                logger.warn(f"Invalid in-menu-status: {in_menu_status}, 'in-menu-status' is expected to be one of: {get_menu_states_str()}")
+            parsed_json["in-menu-status"] = in_menu_status
+        else:
+            parsed_json["in-menu-status"] = menu_state.MenuState.UNKNOWN.name
         
         # minimap
-        if "in-menu-status" in json_obj_keys:
-            in_menu_status = json_obj["in-menu-status"].upper()
-            if in_menu_status not in {"UNKNOWN", "SQUAD-BATTLES-OPPONENT-SELECTION"}:
-                logger.error(f"Invalid value for 'in-menu-status': {in_menu_status}. 'in-menu-status' must be one of: NONE, IN-MENU")
         if "minimap" in json_obj_keys:
             minimap = json_obj.get("minimap", "").upper()
             if minimap and minimap not in {"YES", "NO"}:
-                logger.warn(f"Invalid minimap: {minimap}, 'match-status' is expected to be one of: YES, NO")
-            json_obj["minimap"] = None
+                logger.warn(f"Invalid minimap: {minimap}, 'minimap' is expected to be one of: YES, NO")
+            parsed_json["minimap"] = minimap
+        else:
+            parsed_json["minimap"] = None
         
-        return json_obj
+        return parsed_json
     except json.JSONDecodeError as jsonDecodeError:
         logger.error(f"Error parsing the json string: {json_str}")
         logger.error(jsonDecodeError)
