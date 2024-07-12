@@ -4,7 +4,7 @@ import logging
 
 import config
 from image import ImageWrapper
-from inference import infer_image_from_ollama, parse_json_response
+from ollama_inference import infer_image_from_ollama, parse_json_response
 import monitoring
 from shared_resources import exit_event, latest_screenshot, inferred_memory_collection
 from app_io import get_prompt

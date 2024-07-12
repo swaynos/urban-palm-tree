@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from inference import infer_image_from_ollama
+from ollama_inference import infer_image_from_ollama
 import monitoring
 from sys import platform
 
