@@ -3,11 +3,11 @@ import asyncio
 import logging
 
 import config
+import monitoring
 from game_state.game_state import GameState, get_game_states
 from game_state.menu_state import MenuState, get_menu_states
 from image import ImageWrapper
 from image_classification_inference import ImageClassifier
-import monitoring
 from shared_resources import exit_event, latest_screenshot, inferred_game_state, inferred_memory_collection
 from app_io import get_prompt
 
@@ -25,7 +25,7 @@ async def infer_image_handler():
     menu_vs_match_classes = get_game_states()
     menu_states_classes = get_menu_states()
     game_status_image_classifier = ImageClassifier(config.MENU_VS_MATCH_MODELPATH, menu_vs_match_classes)
-    menu_status_image_classifier = ImageClassifier(config.IN_MENU_CLASSIFICATION_MODELPATH, menu_states_classes)
+    menu_status_image_classifier = ImageClassifier(config.IN_MENU_CLASSIFICATION_FILENAME, menu_states_classes)
     while(not exit_event.is_set()):
         try:
             # Update statistics for monitoring purposes

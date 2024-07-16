@@ -13,5 +13,7 @@ LOG_LEVEL = "ERROR"
 OLLAMA_URL = "http://localhost:11434/api/generate"
 OLLAMA_MODEL = "llava"
 
+HF_MENU_CLASSIFICATION_PATH = "bendythepirate/fc24-in-menu_classification_model"
+IN_MENU_CLASSIFICATION_FILENAME = "in-menu_classification_model.h5"
+HF_MENU_VS_MATCH_PATH = "bendythepirate/fc24-menu_vs_match_model"
 MENU_VS_MATCH_MODELPATH = "menu_vs_match_model.h5"
-IN_MENU_CLASSIFICATION_MODELPATH = "in-menu_classification_model.h5"

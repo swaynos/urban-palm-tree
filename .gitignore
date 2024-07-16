@@ -164,3 +164,6 @@ screenshots/
 
 # Ingore macOS .DS_Store
 .DS_Store
+
+# Allow .env in the .vscode directory
+!.vscode/.env

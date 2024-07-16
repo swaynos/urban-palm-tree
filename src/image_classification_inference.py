@@ -1,15 +1,18 @@
+import asyncio
 import logging
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-import asyncio
+from huggingface_hub import hf_hub_download
+
+import config
 
 logger = logging.getLogger(__name__)
 
 class ImageClassifier:
 
     def __init__(self, model_path, class_labels, target_resolution=(480, 270)):
-        self.modelpath = model_path
+        self.modelpath = hf_hub_download(config.HF_MENU_CLASSIFICATION_PATH, filename="in-menu_classification_model.h5")
         self.model = tf.keras.models.load_model(model_path)
         # Compile the loaded model specifying metrics
         self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])

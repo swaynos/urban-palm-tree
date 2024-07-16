@@ -4,8 +4,8 @@ import aiohttp
 import json
 import re
 
-import config as config
-import game_state.menu_state as menu_state
+import config
+from game_state.menu_state import MenuState
 from game_state.game_state import get_game_states_str
 from game_state.match_state import get_match_states_str
 from game_state.menu_state import get_menu_states_str
@@ -128,7 +128,7 @@ async def parse_json_response(logger: logging.Logger, json_str: str) -> Optional
                 logger.warn(f"Invalid in-menu-status: {in_menu_status}, 'in-menu-status' is expected to be one of: {get_menu_states_str()}")
             parsed_json["in-menu-status"] = in_menu_status
         else:
-            parsed_json["in-menu-status"] = menu_state.MenuState.UNKNOWN.name
+            parsed_json["in-menu-status"] = MenuState.UNKNOWN.name
         
         # minimap
         if "minimap" in json_obj_keys:
