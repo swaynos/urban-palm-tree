@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 class ImageClassifier:
 
-    def __init__(self, model_path, class_labels, target_resolution=(480, 270)):
-        self.modelpath = hf_hub_download(config.HF_MENU_CLASSIFICATION_PATH, filename="in-menu_classification_model.h5")
-        self.model = tf.keras.models.load_model(model_path)
+    def __init__(self, modelpath, filename, class_labels, target_resolution=(480, 270)):
+        self.modelpath = hf_hub_download(modelpath, filename)
+        self.model = tf.keras.models.load_model(self.modelpath)
         # Compile the loaded model specifying metrics
         self.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 

@@ -24,8 +24,8 @@ async def infer_image_handler():
     # Initialize the menu vs. match image classifier
     menu_vs_match_classes = get_game_states()
     menu_states_classes = get_menu_states()
-    game_status_image_classifier = ImageClassifier(config.MENU_VS_MATCH_MODELPATH, menu_vs_match_classes)
-    menu_status_image_classifier = ImageClassifier(config.IN_MENU_CLASSIFICATION_FILENAME, menu_states_classes)
+    game_status_image_classifier = ImageClassifier(config.HF_MENU_VS_MATCH_PATH, config.MENU_VS_MATCH_FILENAME, menu_vs_match_classes)
+    menu_status_image_classifier = ImageClassifier(config.HF_MENU_CLASSIFICATION_PATH, config.IN_MENU_CLASSIFICATION_FILENAME, menu_states_classes)
     while(not exit_event.is_set()):
         try:
             # Update statistics for monitoring purposes
