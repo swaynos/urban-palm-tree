@@ -77,21 +77,7 @@ async def infer_image_handler():
                     if inferred_state['GameState'] == GameState.IN_MENU.name:
                         menu_status_response = await menu_status_image_classifier.classify_image(image)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                        
                         inferred_state['MenuState'] = menu_status_response.name
                         logger.info(f"The currently inferred menu state of the game is {menu_status_response.name}")
                     logger.info(f"Updating the shared inferred_game_state.")
