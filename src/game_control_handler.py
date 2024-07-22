@@ -23,26 +23,33 @@ async def controller_input_handler(app: RunningApplication, game: GameController
     It uses the `controller` module to grab the latest input data for each button on the controller and performs actions based on those inputs.
     """
     logger = logging.getLogger(__name__)
+    ongoing_action = None
     while(not exit_event.is_set()):
         logger.debug(f"Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
         controller_input_thread_statistics.count += 1
         try:
             current_game_state = await inferred_game_state.read_data()
-
-            if current_game_state is not None and current_game_state['GameState'] == GameState.IN_MATCH.name:
-                logging.info("Game is in match, not sending controller input")
-                # TODO: Do something in-match
-            elif current_game_state is not None and current_game_state['GameState'] == GameState.IN_MENU.name:
-                if (current_game_state['MenuState'] == MenuState.SQUAD_BATTLES_OPPONENT_SELECTION.name):
-                    logging.info(f"Game is at the {current_game_state['MenuState']}")
-                    # TODO: Do something in the opponent selection menu
-                    #
-                    #
-                elif (current_game_state['MenuState'] != MenuState.UNKNOWN.name):
-                    logging.info(f"Game is at the {current_game_state['MenuState']}. Tapping cross.")
-                    game.io.tap(game.io.Cross)
+            if current_game_state is not None:
+                if current_game_state['GameState'] == GameState.IN_MATCH.name:
+                    if ongoing_action is None:
+                        logger.info("Game is in match, starting spin_in_circles.")
+                        ongoing_action = asyncio.create_task(game.spin_in_circles(2))
+                elif current_game_state['GameState'] == GameState.IN_MENU.name:
+                    if ongoing_action is not None and not ongoing_action.done():
+                        logger.info("Game is in menu, stopping spin_in_circles.")
+                        ongoing_action.cancel()  # This will stop the ongoing task
+                        try:
+                            await ongoing_action
+                        except asyncio.CancelledError:
+                            logger.info("spin_in_circles was cancelled.")
+                        ongoing_action = None
+                    if current_game_state['MenuState'] == MenuState.SQUAD_BATTLES_OPPONENT_SELECTION.name:
+                        logger.info(f"Game is at the {current_game_state['MenuState']}")
+                        # TODO: Do something in the opponent selection menu
+                    elif current_game_state['MenuState'] != MenuState.UNKNOWN.name:
+                        logger.info(f"Game is at the {current_game_state['MenuState']}. Tapping cross.")
+                        game.io.tap(game.io.Cross)
                 
-            await asyncio.sleep(5)  # TODO: Remove
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
             logger.error(argument)

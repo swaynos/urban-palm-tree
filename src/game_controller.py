@@ -1,3 +1,4 @@
+import asyncio
 import time
 
 from playstation_io import PlaystationIO
@@ -12,17 +13,42 @@ class GameController():
             time.sleep(duration)
         self.io.tap(self.io.Cross)
 
-    def spin_in_circles(self, duration):
-        # Hold L2 and spin in a circle over the specified duration
-        with self.io.pressed(self.io.L2, self.io.Lstick.Up, self.io.Lstick.Left):
-            self.io.tap(self.io.Rstick.Left)
-            time.sleep(duration / 4)
-        with self.io.pressed(self.io.L2, self.io.Lstick.Down, self.io.Lstick.Left):
-            self.io.tap(self.io.Rstick.Left)
-            time.sleep(duration / 4)
-        with self.io.pressed(self.io.L2, self.io.Lstick.Down, self.io.Lstick.Right):
-            self.io.tap(self.io.Rstick.Left)
-            time.sleep(duration / 4)
-        with self.io.pressed(self.io.L2, self.io.Lstick.Up, self.io.Lstick.Right):
-            self.io.tap(self.io.Rstick.Left)
-            time.sleep(duration / 4)
+    async def spin_in_circles(self, duration):
+            end_time = time.time() + duration
+            try:
+                while time.time() < end_time:
+                    # Sequence to spin in a circle
+                    # Up and Left
+                    with self.io.pressed(self.io.L2, self.io.Lstick.Up, self.io.Lstick.Left):
+                        self.io.tap(self.io.Rstick.Left)
+                        await asyncio.sleep(0.25)  # Keep it pressed for 0.25 seconds
+
+                    # Up and Right
+                    with self.io.pressed(self.io.L2, self.io.Lstick.Up, self.io.Lstick.Right):
+                        self.io.tap(self.io.Rstick.Left)
+                        await asyncio.sleep(0.25)
+
+                    # Down and Right
+                    with self.io.pressed(self.io.L2, self.io.Lstick.Down, self.io.Lstick.Right):
+                        self.io.tap(self.io.Rstick.Left)
+                        await asyncio.sleep(0.25)
+
+                    # Down and Left
+                    with self.io.pressed(self.io.L2, self.io.Lstick.Down, self.io.Lstick.Left):
+                        self.io.tap(self.io.Rstick.Left)
+                        await asyncio.sleep(0.25)
+
+                    # Back to Up and Left to complete the circle
+                    with self.io.pressed(self.io.L2, self.io.Lstick.Up, self.io.Lstick.Left):
+                        self.io.tap(self.io.Rstick.Left)
+                        await asyncio.sleep(0.25)
+
+            except asyncio.CancelledError:
+                # Add any cleanup code if needed here when cancelled
+                # This may be redundant
+                self.io.release_joystick_direction(self.io.Lstick)
+                self.io.release_joystick_direction(self.io.Rstick)
+                # Notify about cancellation if needed
+            finally:
+                self.io.release_all_buttons() # Ensure all buttons are released
+                pass

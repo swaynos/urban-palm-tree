@@ -23,7 +23,6 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         # Initialize the Queue to hold images
         self.image_queue = Queue()
-        latest_screenshot = self.image_queue
 
         # Retrieve paths of static screenshots in the directory
         self.static_screenshot_paths = [
@@ -32,7 +31,7 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
         
         # Populate the image queue with ImageWrapper objects created from the static screenshot paths
         for path in self.static_screenshot_paths:
-            image = PILImage.open(path)
+            image = ImageWrapper(PILImage.open(path))
             self.image_queue.put(image)
 
         # Since we set the exit_event to stop the handler execution, 
@@ -40,59 +39,47 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
         exit_event.clear()
 
     async def mock_get_image_from_queue(self):
-        if not self.image_queue:
-            return None
-        return self.image_queue.get()
+        if not self.image_queue.empty():
+            return self.image_queue.get()
+        else:
+            # If the queue is empty, set the exit event to stop the handler execution
+            exit_event.set()
+        return None
     
     # Test method to verify depletion of the test image queue
-    @patch('shared_resources.latest_screenshot', side_effect=Mock)
+    @patch('shared_resources.latest_screenshot', new_callable=Mock)
     @patch('image_classification_inference.ImageClassifier.classify_image', return_value=GameState.IN_MATCH)
     async def test_image_queue_depletes(self, mock_classify_image, mock_latest_screenshot):
-        # Define mock for grabbing the latest screenshot
-        # Define empty() conditions
-        def custom_get_screenshot_empty_side_effect():
-            return False
-        mock_latest_screenshot.empty.return_value = custom_get_screenshot_empty_side_effect  
-        # Define exit conditions (when no more sreenshots are left)
-        async def custom_get_screenshot_side_effect():
-            screenshot = await self.mock_get_image_from_queue()
-            if screenshot is None:
-                exit_event.set()
-                # Create empty image 480x270 to prevent errors
-                #screenshot = PILImage.new('RGBA', target_resolution)
-            return screenshot
-        mock_latest_screenshot.get.side_effect = custom_get_screenshot_side_effect
-
+        # Mock methods for latest_screenshot
+        mock_latest_screenshot.empty.return_value = False
+        mock_latest_screenshot.get.side_effect = self.mock_get_image_from_queue
         await infer_image_handler()
 
         # Assert that the image queue is empty after processing
         self.assertTrue(self.image_queue.empty())
-    
-    @patch('game_controller.PlaystationIO')
-    async def test_game_loop(self, mock_get_screenshot, mock_playstation_io):
-        # Define mock for grabbing the latest screenshot
-        # Define exit conditions (when no more sreenshots are left)
-        async def custom_get_screenshot_side_effect():
-            screenshot = await self.mock_get_image_from_queue()
-            if screenshot is None:
-                exit_event.set()
-            return screenshot
-        mock_get_screenshot.side_effect = custom_get_screenshot_side_effect
+
+    @patch('shared_resources.latest_screenshot', new_callable=Mock)
+    @patch('game_controller.PlaystationIO', new_callable=Mock)
+    async def test_game_loop(self, mock_playstation_io, mock_latest_screenshot):
+        # Mock methods for latest_screenshot
+        mock_latest_screenshot.empty.return_value = False
+        mock_latest_screenshot.get.side_effect = self.mock_get_image_from_queue
 
         app = Mock(spec=RunningApplication)
-        mock_io = Mock()  # Create a new Mock object
-        mock_playstation_io.return_value = mock_io  # Patch the io attribute with the Mock object
-
-        # Instantiate the GameController
         game = GameController()
+        mock_playstation_io_instance = mock_playstation_io.return_value
 
         await asyncio.gather(
             infer_image_handler(),
             controller_input_handler(app, game)
         )
 
+        # This is a very expensive test that doesn't assert much, but it does ensure that the game loop runs without errors.
+
         # Assertions
-        # TODO: What to assert for?
+        self.assertTrue(mock_playstation_io_instance.tap.called, "Expected tap method to be called for controller input.")
+        self.assertTrue(inferred_game_state.data is not None, "Expected inferred_game_state to have been updated.")
+        # Additional assertions to check details about what was called on the mock.
 
 if __name__ == '__main__':
     unittest.main()
