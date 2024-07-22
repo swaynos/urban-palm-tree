@@ -9,7 +9,6 @@ if platform == "darwin":
     from macos_app import RunningApplication
 elif platform == "linux" or platform == "linux2":
     from linux_app import RunningApplication
-from shared_resources import exit_event, latest_screenshot
 import monitoring
 
 capture_image_thread_statistics = monitoring.Statistics()
@@ -21,6 +20,12 @@ async def capture_image_handler(app: RunningApplication):
     The image is then locked with the `latest_screenshot_mutex` lock, ensuring that only one thread can access it at a time.
     """
     logger = logging.getLogger(__name__)
+
+    # Import shared resources required for managing the lifecycle of the thread
+    # `exit_event` is an event flag used to gracefully terminate the loop
+    # `latest_screenshot` holds the most recent screenshot to be processed for inference
+    from shared_resources import exit_event, latest_screenshot
+
     while(not exit_event.is_set()):
         logger.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
         capture_image_thread_statistics.count += 1
