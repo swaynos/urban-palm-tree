@@ -8,12 +8,13 @@ from sys import platform
 from app_io import get_prompt
 from game_controller import GameController
 from game_state import GameState, MenuState
-from shared_resources import exit_event, inferred_memory_collection, inferred_game_state
 if platform == "darwin":
     from macos_app import RunningApplication
 elif platform == "linux" or platform == "linux2":
     from linux_app import RunningApplication
 from image import ImageWrapper
+from shared_resources import exit_event
+
 controller_input_thread_statistics = monitoring.Statistics()
 
 # TODO: Check for active application before sending
@@ -23,7 +24,15 @@ async def controller_input_handler(app: RunningApplication, game: GameController
     It uses the `controller` module to grab the latest input data for each button on the controller and performs actions based on those inputs.
     """
     logger = logging.getLogger(__name__)
+
+    # Import shared resources required for managing the lifecycle of the thread.
+    # Moving the import to within the function ensures that the module is only imported when 
+    # the function is called, which allows patching of these variables in tests.
+    # `inferred_game_state` holds the most recent inferred game state
+    from shared_resources import inferred_memory_collection, inferred_game_state
+
     ongoing_action = None
+
     while(not exit_event.is_set()):
         logger.debug(f"Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
         controller_input_thread_statistics.count += 1
