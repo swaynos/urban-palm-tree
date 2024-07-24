@@ -9,6 +9,7 @@ from game_state.menu_state import MenuState, get_menu_states
 from image import ImageWrapper
 from image_classification_inference import ImageClassifier
 from app_io import get_prompt
+from shared_resources import exit_event
 
 infer_image_thread_statistics = monitoring.Statistics()
 
@@ -20,10 +21,11 @@ async def infer_image_handler():
     """
     logger = logging.getLogger(__name__)
 
-    # Import shared resources required for managing the lifecycle of the thread
-    # `exit_event` is an event flag used to gracefully terminate the loop
+    # Import shared resources required for managing the lifecycle of the thread.
+    # Moving the import to within the function ensures that the module is only imported when 
+    # the function is called, which allows patching of these variables in tests.
     # `latest_screenshot` holds the most recent screenshot to be processed for inference
-    from shared_resources import exit_event, latest_screenshot, inferred_game_state, inferred_memory_collection
+    from shared_resources import latest_screenshot, inferred_game_state, inferred_memory_collection
     
     # Initialize the menu vs. match image classifier
     menu_vs_match_classes = get_game_states()
