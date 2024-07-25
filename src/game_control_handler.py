@@ -17,6 +17,14 @@ from shared_resources import exit_event
 
 controller_input_thread_statistics = monitoring.Statistics()
 
+# TODO: Consider controller_input_handler as a class with better dependency injection
+def create_ongoing_action(coro):
+    """
+    Create an ongoing action as a task.
+    This function can be patched in tests.
+    """
+    return asyncio.create_task(coro)
+
 # TODO: Check for active application before sending
 async def controller_input_handler(app: RunningApplication, game: GameController):
     """
@@ -42,13 +50,14 @@ async def controller_input_handler(app: RunningApplication, game: GameController
                 if current_game_state['GameState'] == GameState.IN_MATCH.name:
                     if ongoing_action is None:
                         logger.info("Game is in match, starting spin_in_circles.")
-                        ongoing_action = asyncio.create_task(game.spin_in_circles(2))
+                        ongoing_action = create_ongoing_action(game.spin_in_circles(2))
                 elif current_game_state['GameState'] == GameState.IN_MENU.name:
                     if ongoing_action is not None and not ongoing_action.done():
                         logger.info("Game is in menu, stopping spin_in_circles.")
                         ongoing_action.cancel()  # This will stop the ongoing task
                         try:
                             await ongoing_action
+                            
                         except asyncio.CancelledError:
                             logger.info("spin_in_circles was cancelled.")
                         ongoing_action = None
