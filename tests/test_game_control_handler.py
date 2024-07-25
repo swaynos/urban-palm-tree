@@ -5,10 +5,9 @@ from unittest.mock import AsyncMock, Mock, patch
 from game_controller import GameController
 from game_control_handler import controller_input_handler
 from game_state import GameState, MenuState
-from game_state.match_state import MatchState
 from macos_app import RunningApplication
 from playstation_io import PlaystationIO
-from shared_resources import inferred_game_state, exit_event
+from shared_resources import exit_event
 
 class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
@@ -93,7 +92,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Assert that create_ongoing_action was called because it should have processed the match state
         self.assertEqual(mock_create_ongoing_action.call_count, 1)
 
-        mock_inferred_game_state.read_data = AsyncMock(return_value=self.mock_in_menu_squad_battles_opponent_selection) 
+        mock_inferred_game_state.read_data = AsyncMock(return_value=self.mock_in_menu_squad_battles_opponent_selection)
 
         # Clean up
         exit_event.set()  # Ensure you signal the handler to stop
