@@ -17,3 +17,5 @@ HF_MENU_CLASSIFICATION_PATH = "bendythepirate/fc24-in-menu_classification_model"
 IN_MENU_CLASSIFICATION_FILENAME = "in-menu_classification_model.h5"
 HF_MENU_VS_MATCH_PATH = "bendythepirate/fc24-menu_vs_match_model"
 MENU_VS_MATCH_FILENAME = "menu_vs_match_model.h5"
+
+N_LAST_STATES_WEIGHTS = [1, .8, .6, .4, .2]

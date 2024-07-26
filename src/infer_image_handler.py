@@ -48,6 +48,7 @@ async def infer_image_handler():
                 # Append the current inferred state as a tuple
                 inferred_state = {
                     'GameState': game_status_response.name,
+                    'GameStatePredictions' : game_status_predictions,
                     'MenuState': None,
                     'MatchState': None,
                 }
@@ -55,24 +56,47 @@ async def infer_image_handler():
 
                 inferred_memory_collection.append(inferred_state)
 
-                # Check if all the latest inferred states are the same
-                latest_states = inferred_memory_collection.peek_n_latest(5)
-                all_states_equal = True
-                last_state = None
-                for state in latest_states:
-                    if last_state is not None:
-                        all_states_equal = all_states_equal and state['GameState'] == last_state['GameState']
-                        # TODO: MenuState and MatchState?
-                    last_state = state
-                if all_states_equal:
-                    logger.info(f"The last 5 inferred states are all the same: {last_state['GameState']}.")
-                    if inferred_state['GameState'] == GameState.IN_MENU.name:
-                        menu_status_response, menu_status_predictions = await menu_status_image_classifier.classify_image(image)
+                # Check the score of the latest inferred states
+                # This works by running the difference of the gamestate scores along both axes to determine a bias
+                # TODO: Minor improvement idea, also find the similarity of the last states
+                # TODO: OR consider VERY HIGH prediction score of the last state as a bias. Maybe consider weighting towards freshness?
+                latest_states_sum = 0
+                latest_states = inferred_memory_collection.peek_n_latest(len(config.N_LAST_STATES_WEIGHTS))
+                for i, state in enumerate(latest_states):
+                    x_predictions = state['GameStatePredictions'][0][0] * config.N_LAST_STATES_WEIGHTS[i]
+                    y_predictions = state['GameStatePredictions'][0][1] * config.N_LAST_STATES_WEIGHTS[i] * -1
+                    latest_states_sum += x_predictions + y_predictions
+                logger.info(f"Summed difference of gamestate scores is {latest_states_sum}")
+
+                if latest_states_sum > 1: 
+                    # IN-MATCH
+                    biased_state = {
+                        'GameState': GameState.IN_MATCH.name,
+                        'MenuState': None,
+                        'MatchState': None
+                    }
+                    await inferred_game_state.update_data(biased_state)
+                    logger.info("Updated inferred_game_state to IN-MATCH")
+                    # TODO: Write Unit Test
+                    # TODO: Determine match state
+                elif latest_states_sum < -1:
+                    # IN-MENU
+                    biased_state = {
+                        'GameState': GameState.IN_MENU.name,
+                        'MenuState': None,
+                        'MatchState': None
+                    }
+                    # Update the game state right away, without additional menu status, to allow other loops to react
+                    await inferred_game_state.update_data(biased_state)
+                    logger.info("Updated inferred_game_state to IN-MENU")
+
+                    # TODO: use menu_status_predictions?
+                    # TODO: As-is, the last state on inferred_memory_collection will not get the menu_status_image_classifier response
+                    menu_status_response, menu_status_predictions = await menu_status_image_classifier.classify_image(image)
                         
-                        inferred_state['MenuState'] = menu_status_response.name
-                        logger.info(f"The currently inferred menu state of the game is {menu_status_response.name}")
-                    logger.info(f"Updating the shared inferred_game_state.")
-                    await inferred_game_state.update_data(inferred_state)
+                    biased_state['MenuState'] = menu_status_response.name
+                    await inferred_game_state.update_data(biased_state)
+                    logger.info(f"Updated inferred_game_state['ManuState'] to {biased_state['MenuState']}")
             else:
                 logger.warning("There is not a latest screenshot to infer from")
             
