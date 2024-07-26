@@ -20,7 +20,7 @@ def load_template_grayscale(template_name):
 # TODO: Unit Tests
 class ImageWrapper:
     """A class to represent an image. Wraps a PIL Image and a MatLike which is used by OpenCV."""
-    def __init__(self, image):
+    def __init__(self, image, saved_path=None):
         if isinstance(image, PILImage):
             self._image = image
             self._imageArray = np.array(image)
@@ -29,7 +29,7 @@ class ImageWrapper:
             self._image = PILImage.fromarray(image)
         else:
             raise ValueError("Unsupported image type: must be a PIL.Image.Image or a numpy.ndarray")
-        self.saved_path = None
+        self.saved_path = saved_path
 
     # Image manipulation
     def scaled_as_base64(self, width=640, height=360, encoding ='utf-8'):

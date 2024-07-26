@@ -24,12 +24,11 @@ class ImageClassifier:
     async def classify_image(self, image_wrapper):
         logger.debug(f"Classifying image from latest screenshot using {self.modelpath}")
         img = await self.load_and_preprocess_image(image_wrapper)
-        prediction = await asyncio.to_thread(self.model.predict, img)
+        predictions = await asyncio.to_thread(self.model.predict, img)
 
-        predicted_class = np.argmax(prediction)
-        status = self.class_labels[predicted_class]
+        predicted_class = self.class_labels[np.argmax(predictions)]
 
-        return status
+        return predicted_class, predictions
 
     async def load_and_preprocess_image(self, image_wrapper):
         img_array = image_wrapper._imageArray

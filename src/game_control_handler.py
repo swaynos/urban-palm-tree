@@ -54,10 +54,9 @@ async def controller_input_handler(app: RunningApplication, game: GameController
                 elif current_game_state['GameState'] == GameState.IN_MENU.name:
                     if ongoing_action is not None and not ongoing_action.done():
                         logger.info("Game is in menu, stopping spin_in_circles.")
-                        ongoing_action.cancel()  # This will stop the ongoing task
                         try:
+                            ongoing_action.cancel()  # This will stop the ongoing task
                             await ongoing_action
-                            
                         except asyncio.CancelledError:
                             logger.info("spin_in_circles was cancelled.")
                         ongoing_action = None
@@ -67,6 +66,7 @@ async def controller_input_handler(app: RunningApplication, game: GameController
                     elif current_game_state['MenuState'] != MenuState.UNKNOWN.name:
                         logger.info(f"Game is at the {current_game_state['MenuState']}. Tapping cross.")
                         game.io.tap(game.io.Cross)
+                        await asyncio.sleep(.05) # Sleep for 50ms to allow the game to handle the input
                 
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:

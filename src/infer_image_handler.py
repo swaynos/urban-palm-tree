@@ -43,21 +43,7 @@ async def infer_image_handler():
                 image = await latest_screenshot.get()
 
             if(image is not None):
-                #logger.debug("inferring image from latest screenshot using ollama")
-                #prompt = get_prompt("match-status_prompt_returns-json.txt")
-   
-                # response_str = await infer_image_from_ollama(prompt, image.scaled_as_base64(width=1280, height=720))
-                # response = await parse_json_response(logger, response_str)
-
-                # if (response is not None):
-                #     inferred_memory_collection.append([response, image])
-                #     logger.info("Inferred match-status is {}".format(response["match-status"]))
-                
-                # if (config.SAVE_SCREENSHOT_RESPONSE and image.saved_path is not None):
-                #     save_path = image.saved_path.replace(".png", "-response.json")
-                #     async with aiofiles.open(save_path, 'w') as out_file:
-                #         await out_file.write(response_str)
-                game_status_response = await game_status_image_classifier.classify_image(image)
+                game_status_response, game_status_predictions = await game_status_image_classifier.classify_image(image)
                 
                 # Append the current inferred state as a tuple
                 inferred_state = {
@@ -70,7 +56,7 @@ async def infer_image_handler():
                 inferred_memory_collection.append(inferred_state)
 
                 # Check if all the latest inferred states are the same
-                latest_states = inferred_memory_collection.peek_n_latest(10)
+                latest_states = inferred_memory_collection.peek_n_latest(5)
                 all_states_equal = True
                 last_state = None
                 for state in latest_states:
@@ -79,17 +65,14 @@ async def infer_image_handler():
                         # TODO: MenuState and MatchState?
                     last_state = state
                 if all_states_equal:
-                    logger.info(f"The last 10 inferred states are all the same: {last_state['GameState']}.")
+                    logger.info(f"The last 5 inferred states are all the same: {last_state['GameState']}.")
                     if inferred_state['GameState'] == GameState.IN_MENU.name:
-                        menu_status_response = await menu_status_image_classifier.classify_image(image)
-
+                        menu_status_response, menu_status_predictions = await menu_status_image_classifier.classify_image(image)
                         
                         inferred_state['MenuState'] = menu_status_response.name
                         logger.info(f"The currently inferred menu state of the game is {menu_status_response.name}")
                     logger.info(f"Updating the shared inferred_game_state.")
                     await inferred_game_state.update_data(inferred_state)
-            
-                # TODO: Consider a more robust strategy that uses the internal score from classify_image() to determine if the state has changed, or at least provide weight to the most recent states.
             else:
                 logger.warning("There is not a latest screenshot to infer from")
             
