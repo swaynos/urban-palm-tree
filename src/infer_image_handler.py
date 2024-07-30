@@ -91,7 +91,8 @@ async def infer_image_handler():
                     logger.info("Updated inferred_game_state to IN-MENU")
 
                     # TODO: use menu_status_predictions?
-                    # TODO: As-is, the last state on inferred_memory_collection will not get the menu_status_image_classifier response
+                    # TODO: As-is, the most recent state on inferred_memory_collection will be the only one to get the 
+                    # menu_status_image_classifier response
                     menu_status_response, menu_status_predictions = await menu_status_image_classifier.classify_image(image)
                         
                     biased_state['MenuState'] = menu_status_response.name

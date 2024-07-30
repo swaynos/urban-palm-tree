@@ -52,7 +52,7 @@ async def controller_input_handler(app: RunningApplication, game: GameController
                         logger.info("Game is in match, starting spin_in_circles.")
                         ongoing_action = create_ongoing_action(game.spin_in_circles(2))
                 elif current_game_state['GameState'] == GameState.IN_MENU.name:
-                    if ongoing_action is not None and not ongoing_action.done():
+                    if ongoing_action is not None:
                         logger.info("Game is in menu, stopping spin_in_circles.")
                         try:
                             ongoing_action.cancel()  # This will stop the ongoing task
@@ -63,7 +63,7 @@ async def controller_input_handler(app: RunningApplication, game: GameController
                     if current_game_state['MenuState'] == MenuState.SQUAD_BATTLES_OPPONENT_SELECTION.name:
                         logger.info(f"Game is at the {current_game_state['MenuState']}")
                         # TODO: Do something in the opponent selection menu
-                    elif current_game_state['MenuState'] != MenuState.UNKNOWN.name:
+                    elif current_game_state['MenuState'] is not None:
                         logger.info(f"Game is at the {current_game_state['MenuState']}. Tapping cross.")
                         game.io.tap(game.io.Cross)
                         await asyncio.sleep(.05) # Sleep for 50ms to allow the game to handle the input
