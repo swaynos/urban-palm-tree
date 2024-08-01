@@ -74,11 +74,37 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         exit_event.set()
         task.cancel()
 
+
     @patch('shared_resources.inferred_game_state')
     @patch('game_control_handler.create_ongoing_action')
     async def test_controller_input_cancel_action(self, mock_create_ongoing_action, mock_inferred_game_state):
-        mock_inferred_game_state.read_data = AsyncMock(return_value=self.mock_in_match)
-    
+        # Set up mock to return sequence of game states
+        async_mock_data_sequence = AsyncMock(side_effect=[
+            self.mock_in_match,  # First 10 calls
+            self.mock_in_match,
+            self.mock_in_match,
+            self.mock_in_match,
+            self.mock_in_match,
+            self.mock_in_match,
+            self.mock_in_match,
+            self.mock_in_match,
+            self.mock_in_match,
+            self.mock_in_match,
+            self.mock_in_menu,
+            self.mock_in_menu,
+            self.mock_in_menu,
+            self.mock_in_menu,
+            self.mock_in_menu,
+            self.mock_in_menu_squad_battles_opponent_selection,
+            self.mock_in_menu_squad_battles_opponent_selection,
+            self.mock_in_menu_squad_battles_opponent_selection,
+            self.mock_in_menu_squad_battles_opponent_selection,
+            self.mock_in_menu_squad_battles_opponent_selection  # Last 10 calls - Game is in-menu
+        ])
+        
+        # Assign `AsyncMock` to read_data
+        mock_inferred_game_state.read_data = async_mock_data_sequence
+
         # Create a mock for the ongoing action/task
         mock_task = AsyncMock()
         mock_create_ongoing_action.return_value = mock_task  # Ensure it returns the mock task
@@ -92,13 +118,19 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Assert that create_ongoing_action was called because it should have processed the match state
         self.assertEqual(mock_create_ongoing_action.call_count, 1)
 
-        mock_inferred_game_state.read_data = AsyncMock(return_value=self.mock_in_menu_squad_battles_opponent_selection)
+        # Allow a short wait for the transition to menu to take place
+        await asyncio.sleep(1)  # TODO: reduce this once the test passes
+
+        # Ensure the mock ongoing task was canceled
+        mock_task.cancel.assert_called_once()  # Assert that cancel was called on the ongoing action
+        self.assertEqual(mock_task.cancel.call_count, 1)  # Check that the cancel method was called
 
         # Clean up
         exit_event.set()  # Ensure you signal the handler to stop
         handler_task.cancel()
         with self.assertRaises(asyncio.CancelledError):
             await handler_task  # This ensures that the task was cancelled correctly
+
 
 if __name__ == '__main__':
     unittest.main()
