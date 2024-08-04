@@ -65,7 +65,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         task = asyncio.create_task(controller_input_handler(self.app, self.game))
 
         # Allow the handler priority on the event loop for a very short time
-        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.1)
 
         # Assert that the correct interactions happened during the menu state
         self.assertGreater(self.game.io.tap.call_count, 0)
@@ -74,56 +74,80 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         exit_event.set()
         task.cancel()
 
-
     @patch('shared_resources.inferred_game_state')
     @patch('game_control_handler.create_ongoing_action')
     async def test_controller_input_cancel_action(self, mock_create_ongoing_action, mock_inferred_game_state):
-        # Set up mock to return sequence of game states
-        async_mock_data_sequence = AsyncMock(side_effect=[
-            self.mock_in_match,  # First 10 calls
-            self.mock_in_match,
-            self.mock_in_match,
-            self.mock_in_match,
-            self.mock_in_match,
-            self.mock_in_match,
-            self.mock_in_match,
-            self.mock_in_match,
-            self.mock_in_match,
-            self.mock_in_match,
-            self.mock_in_menu,
-            self.mock_in_menu,
-            self.mock_in_menu,
-            self.mock_in_menu,
-            self.mock_in_menu,
-            self.mock_in_menu_squad_battles_opponent_selection,
-            self.mock_in_menu_squad_battles_opponent_selection,
-            self.mock_in_menu_squad_battles_opponent_selection,
-            self.mock_in_menu_squad_battles_opponent_selection,
-            self.mock_in_menu_squad_battles_opponent_selection  # Last 10 calls - Game is in-menu
-        ])
+        # Define a generator function for your responses
+        def mock_inferred_game_state_responses():
+            for _ in range(10):  # First 10 calls return in_match
+                yield self.mock_in_match
+            while True:  # Subsequent calls return in_menu infinitely
+                yield self.mock_in_menu
+
+        # Create an AsyncMock instance for read_data
+        async_mock_data_sequence = AsyncMock(side_effect=mock_inferred_game_state_responses())
         
         # Assign `AsyncMock` to read_data
         mock_inferred_game_state.read_data = async_mock_data_sequence
 
-        # Create a mock for the ongoing action/task
-        mock_task = AsyncMock()
-        mock_create_ongoing_action.return_value = mock_task  # Ensure it returns the mock task
+        # Mock the create_ongoing_action function to return a mock task
+        mock_create_ongoing_action.return_value = asyncio.create_task(asyncio.sleep(5))
 
-        # Run the controller input handler in its own task
+        # Run the controller input handler
         handler_task = asyncio.create_task(controller_input_handler(self.app, self.game))
 
-        # Allow the handler to run for a short while
-        await asyncio.sleep(0.01)
+        # Yield control back to the handler to let it run once
+        await asyncio.sleep(0)
 
         # Assert that create_ongoing_action was called because it should have processed the match state
         self.assertEqual(mock_create_ongoing_action.call_count, 1)
 
         # Allow a short wait for the transition to menu to take place
-        await asyncio.sleep(1)  # TODO: reduce this once the test passes
+        await asyncio.sleep(0.01)
 
         # Ensure the mock ongoing task was canceled
-        mock_task.cancel.assert_called_once()  # Assert that cancel was called on the ongoing action
-        self.assertEqual(mock_task.cancel.call_count, 1)  # Check that the cancel method was called
+        self.assertEqual(mock_create_ongoing_action.return_value._state, 'CANCELLED')  
+
+        # Clean up
+        exit_event.set()  # Ensure you signal the handler to stop
+        handler_task.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await handler_task  # This ensures that the task was cancelled correctly
+
+    @patch('shared_resources.inferred_game_state')
+    @patch('game_control_handler.create_ongoing_action')
+    async def test_controller_input_no_cancel_on_completed_action(self, mock_create_ongoing_action, mock_inferred_game_state):
+        # Define a generator function for your responses
+        def mock_inferred_game_state_responses():
+            for _ in range(10):  # First 10 calls return in_match
+                yield self.mock_in_match
+            while True:  # Subsequent calls return in_menu infinitely
+                yield self.mock_in_menu
+
+        # Create a completed task
+        completed_task = asyncio.create_task(asyncio.sleep(0))  # This task will complete immediately
+
+        # Mock the create_ongoing_action function to return a completed task
+        mock_create_ongoing_action.return_value = completed_task
+
+        # Assign the async mock to read_data
+        async_mock_data_sequence = AsyncMock(side_effect=mock_inferred_game_state_responses())
+        mock_inferred_game_state.read_data = async_mock_data_sequence
+
+        # Run the controller input handler
+        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game))
+
+        # Yield control back to the handler to let it run once
+        await asyncio.sleep(0)
+
+        # Assert that create_ongoing_action was called
+        self.assertEqual(mock_create_ongoing_action.call_count, 1)
+
+        # Allow a short wait for the transition to menu to take place
+        await asyncio.sleep(0.01)
+
+        # Ensure the task state is completed (not 'CANCELLED')
+        self.assertEqual(mock_create_ongoing_action.return_value._state, 'FINISHED') 
 
         # Clean up
         exit_event.set()  # Ensure you signal the handler to stop

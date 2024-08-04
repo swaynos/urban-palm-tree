@@ -88,7 +88,7 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
     # Test method to verify depletion of the test image queue
     @patch('shared_resources.latest_screenshot', new_callable=Mock)
     @patch('image_classification_inference.ImageClassifier.classify_image', return_value=GameState.IN_MATCH)
-    async def test_image_queue_depletes(self, mock_latest_screenshot):
+    async def test_image_queue_depletes(self, mock_classify_image, mock_latest_screenshot):
         # Mock methods for latest_screenshot
         mock_latest_screenshot.empty.return_value = False
         mock_latest_screenshot.get.side_effect = self.mock_get_image_from_queue

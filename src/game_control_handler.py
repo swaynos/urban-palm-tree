@@ -55,8 +55,9 @@ async def controller_input_handler(app: RunningApplication, game: GameController
                     if ongoing_action is not None:
                         logger.info("Game is in menu, stopping spin_in_circles.")
                         try:
-                            ongoing_action.cancel()  # This will stop the ongoing task
-                            await ongoing_action
+                            if not ongoing_action.done():
+                                ongoing_action.cancel()  # This will stop the ongoing task
+                                await ongoing_action
                         except asyncio.CancelledError:
                             logger.info("spin_in_circles was cancelled.")
                         ongoing_action = None
