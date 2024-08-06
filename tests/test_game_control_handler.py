@@ -155,6 +155,34 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(asyncio.CancelledError):
             await handler_task  # This ensures that the task was cancelled correctly
 
+    @patch('shared_resources.inferred_game_state')
+    async def test_controller_validate_input_received(self, mock_inferred_game_state):
+        # Define a generator function for your responses
+        def mock_inferred_game_state_responses():
+            while True:  # Subsequent calls return in_menu infinitely
+                yield self.mock_in_menu
+
+        # Create an AsyncMock instance for read_data
+        async_mock_data_sequence = AsyncMock(side_effect=mock_inferred_game_state_responses())
+        
+        # Assign `AsyncMock` to read_data
+        mock_inferred_game_state.read_data = async_mock_data_sequence
+
+        # Run the controller input handler
+        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game))
+
+        # Yield control back to the handler to let it run once
+        await asyncio.sleep(0.1)
+
+        # Ensure the mock ongoing task was canceled
+        self.game.io.tap.assert_called()
+
+        # Clean up
+        exit_event.set()  # Ensure you signal the handler to stop
+        handler_task.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await handler_task  # This ensures that the task was cancelled correctly
+
 
 if __name__ == '__main__':
     unittest.main()
