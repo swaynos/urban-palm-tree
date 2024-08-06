@@ -1,11 +1,13 @@
 import asyncio
 import time
 
+from game_state.squad_battles_tracker import SquadBattlesTracker
 from playstation_io import PlaystationIO
 
 class GameController():
     def __init__(self):
         self.io = PlaystationIO()
+        self.squad_battles_tracker = SquadBattlesTracker()
 
     def go_to_corner(self, duration):
         # Hold L2 and go to the upper left corner of the screen
