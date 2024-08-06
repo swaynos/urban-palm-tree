@@ -120,6 +120,9 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(mock_playstation_io_instance.tap.called, "Expected tap method to be called for controller input.")
         self.assertTrue(inferred_game_state.data is not None, "Expected inferred_game_state to have been updated.")
         # Additional assertions to check details about what was called on the mock.
+    
+    #TODO: before adding any new tests here, consider mocking the image classification
+    # for the test, and writing the test in TestGameControlHandler instead of here.
 
 if __name__ == '__main__':
     unittest.main()
