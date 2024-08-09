@@ -1,6 +1,6 @@
 import asyncio
 import unittest
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, call, patch
 
 from game_controller import GameController
 from game_control_handler import controller_input_handler
@@ -208,8 +208,8 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
 
     @patch('shared_resources.inferred_game_state')
     @patch('game_control_handler.create_ongoing_action')
-    async def test_controller_navigates_sbc(self, mock_create_ongoing_action, mock_inferred_game_state):
-        # Define a generator function for your responses
+    async def test_controller_navigates_sbc_navigates_next_opponent(self, mock_create_ongoing_action, mock_inferred_game_state):
+        # Return mock inferred game state
         def mock_inferred_game_state_responses():
             state_length = 10
             for _ in range(state_length):  # First 10 calls return in_match
@@ -220,9 +220,57 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
                 yield self.mock_in_menu_squad_battles_opponent_selection
             for _ in range(state_length): # Then return 10 calls of in_menu
                 yield self.mock_in_menu
+            while True:  # Subsequent calls return in_match infinitely
+                yield self.mock_in_match
+
+        # Create an AsyncMock instance for read_data
+        async_mock_data_sequence = AsyncMock(side_effect=mock_inferred_game_state_responses())
+
+        # Assign the `AsyncMock` to read_data
+        mock_inferred_game_state.read_data = async_mock_data_sequence
+
+        # Use the real GameController class, but mock the input/output
+        game_controller = GameController()
+        game_controller.io = Mock(spec=PlaystationIO)
+        game_controller.squad_battles_tracker.grid = [[True, False], [False, False]] # Mock the grid position
+        # row, col should be at 0,0
+
+        # Run the controller input handler
+        handler_task = asyncio.create_task(controller_input_handler(self.app, game_controller))
+
+        # Yield control back to the handler to let it run
+        await asyncio.sleep(1)
+
+        # Assert
+        # We expect that during the squad_battles_opponent_selection state, the game controller will navigate
+        # the SBC menu to the appropriate state
+        self.assertEqual(game_controller.squad_battles_tracker.current_col, 1)
+        self.assertEqual(game_controller.squad_battles_tracker.current_row, 0)
+        self.assertEqual(game_controller.squad_battles_tracker.grid, [[True, True], [False, False]])
+        
+        # Assert that game_controller.io.tap was called in the correct order and with expected arguments
+        expected_calls = [call(game_controller.io.Cross), call(game_controller.io.DPadRight)]
+        game_controller.io.tap.assert_has_calls(expected_calls)
+
+        # Clean up
+        self.shared_cleanup(handler_task)
+
+    @patch('shared_resources.inferred_game_state')
+    @patch('game_control_handler.create_ongoing_action')
+    async def test_controller_navigates_sbc_play_match(self, mock_create_ongoing_action, mock_inferred_game_state):
+        # Return mock inferred game state
+        def mock_inferred_game_state_responses():
+            state_length = 10
             for _ in range(state_length):  # First 10 calls return in_match
                 yield self.mock_in_match
-            asyncio.sleep(10) # Sleep for 10 seconds in case we deplete all the images first
+            for _ in range(state_length): # Then return 10 calls of in_menu
+                yield self.mock_in_menu
+            for _ in range(state_length): # Then return 10 calls of in_sbc_menu
+                yield self.mock_in_menu_squad_battles_opponent_selection
+            for _ in range(state_length): # Then return 10 calls of in_menu
+                yield self.mock_in_menu
+            while True:  # Subsequent calls return in_match infinitely
+                yield self.mock_in_match
 
         # Create an AsyncMock instance for read_data
         async_mock_data_sequence = AsyncMock(side_effect=mock_inferred_game_state_responses())
@@ -237,16 +285,14 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Run the controller input handler
         handler_task = asyncio.create_task(controller_input_handler(self.app, game_controller))
 
-         # Yield control back to the handler to let it run
-        await asyncio.sleep(5)
+        # Yield control back to the handler to let it run
+        await asyncio.sleep(1)
 
         # Assert
         # We expect that during the squad_battles_opponent_selection state, the game controller will navigate
         # the SBC menu to the appropriate state
         self.assertEqual(game_controller.squad_battles_tracker.grid, [[True, False], [False, False]])
-        self.assertEqual(game_controller.squad_battles_tracker.current_col, 1)
-        self.assertEqual(game_controller.squad_battles_tracker.current_row, 0)
-        # TODO: Check input received on cross and RIGHT button
+        game_controller.io.tap.assert_called_with(game_controller.io.Cross)
 
         # Clean up
         self.shared_cleanup(handler_task)

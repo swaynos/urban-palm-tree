@@ -1,5 +1,6 @@
 import asyncio
 import time
+from typing import List
 
 from game_state.squad_battles_tracker import SquadBattlesTracker
 from playstation_io import PlaystationIO
@@ -8,6 +9,25 @@ class GameController():
     def __init__(self):
         self.io = PlaystationIO()
         self.squad_battles_tracker = SquadBattlesTracker()
+        self.squad_battles_tracker.play_match_func = self.play_match_function
+        self.squad_battles_tracker.navigate_func = self.navigate_function
+        self.squad_battles_tracker.reset_grid_func = self.reset_grid_function
+
+    def play_match_function(self, row: int, col: int, grid: List[List[bool]]) -> None:
+        self.io.tap(self.io.Cross)
+
+    def navigate_function(self, row: int, col: int, grid: List[List[bool]]) -> None:
+        if (row, col) == (0, 0):
+            self.io.tap(self.io.DPadRight)
+        elif (row, col) == (0, 1):
+            self.io.tap(self.io.DPadDown)
+        elif (row, col) == (1, 1):
+            self.io.tap(self.io.DPadLeft)
+        elif (row, col) == (1, 0):
+            self.io.tap(self.io.DPadUp)
+
+    def reset_grid_function(self) -> None:
+        self.io.tap(self.io.Square)
 
     def go_to_corner(self, duration):
         # Hold L2 and go to the upper left corner of the screen

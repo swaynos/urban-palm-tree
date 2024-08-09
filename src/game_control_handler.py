@@ -64,6 +64,7 @@ async def controller_input_handler(app: RunningApplication, game: GameController
                     if current_game_state['MenuState'] == MenuState.SQUAD_BATTLES_OPPONENT_SELECTION.name:
                         logger.info(f"Game is at the {current_game_state['MenuState']}")
                         game.squad_battles_tracker.play_match()
+                        await asyncio.sleep(1) # Sleep for 1s to allow the game to handle the input
                     elif current_game_state['MenuState'] is not None:
                         logger.info(f"Game is at the {current_game_state['MenuState']}. Tapping cross.")
                         game.io.tap(game.io.Cross)
