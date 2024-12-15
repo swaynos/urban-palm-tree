@@ -8,6 +8,7 @@ from game_state.game_state import GameState, get_game_states
 from game_state.menu_state import MenuState, get_menu_states
 from image import ImageWrapper
 from image_classification_inference import ImageClassifier
+from yolo_image_classification_inference import YoloImageClassifier
 from app_io import get_prompt
 from shared_resources import exit_event
 
@@ -32,6 +33,7 @@ async def infer_image_handler():
     menu_states_classes = get_menu_states()
     game_status_image_classifier = ImageClassifier(config.HF_MENU_VS_MATCH_PATH, config.MENU_VS_MATCH_FILENAME, menu_vs_match_classes)
     menu_status_image_classifier = ImageClassifier(config.HF_MENU_CLASSIFICATION_PATH, config.IN_MENU_CLASSIFICATION_FILENAME, menu_states_classes)
+    squad_selection_image_detection = YoloImageClassifier(config.HF_SQUAD_SELECTION_PATH, config.SQUAD_SELECTION_FILENAME)
     while(not exit_event.is_set()):
         try:
             # Update statistics for monitoring purposes

@@ -27,4 +27,7 @@ HF_MENU_CLASSIFICATION_PATH = os.getenv('HF_MENU_CLASSIFICATION_PATH', "fc24-in-
 IN_MENU_CLASSIFICATION_FILENAME = os.getenv('IN_MENU_CLASSIFICATION_FILENAME', "in-menu_classification_model.h5")
 HF_MENU_VS_MATCH_PATH = os.getenv('HF_MENU_VS_MATCH_PATH', "fc24-menu_vs_match_model")
 MENU_VS_MATCH_FILENAME = os.getenv('MENU_VS_MATCH_FILENAME', "menu_vs_match_model.h5")
+HF_SQUAD_SELECTION_PATH = os.getenv('HF_SQUAD_SELECTION_PATH', "fc24-squad_selection_model")
+SQUAD_SELECTION_FILENAME = os.getenv('SQUAD_SELECTION_FILENAME', "squad_selection_model.pt")
+
 N_LAST_STATES_WEIGHTS = eval(os.getenv('N_LAST_STATES_WEIGHTS', "[1, .8, .6, .4, .2]"))
