@@ -1,9 +1,10 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from ./.env and ./.vscode/.env
+# Load environment variables from ./.env ../.env and ./.vscode/.env
 load_dotenv('.env')
-load_dotenv('.vscode/.env')
+load_dotenv(os.path.abspath(os.path.join(os.getcwd(), '..', '.env')))
+load_dotenv(os.path.abspath(os.path.join(os.getcwd(), '..', '.vscode', '.env')))
 
 # secrets
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
