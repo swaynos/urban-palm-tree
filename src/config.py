@@ -23,6 +23,9 @@ LOG_LEVEL = os.getenv('LOG_LEVEL', "ERROR")
 OLLAMA_URL = os.getenv('OLLAMA_URL', "http://localhost:11434/api/generate")
 OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', "llava")
 
+# This delay will throttle the image capture thread if needed, and avoid overloading the system
+CAPTURE_IMAGE_THREAD_DELAY = int(os.getenv('CAPTURE_IMAGE_THREAD_DELAY', 0))
+
 HF_MENU_CLASSIFICATION_PATH = os.getenv('HF_MENU_CLASSIFICATION_PATH', "fc24-in-menu_classification_model")
 IN_MENU_CLASSIFICATION_FILENAME = os.getenv('IN_MENU_CLASSIFICATION_FILENAME', "in-menu_classification_model.h5")
 HF_MENU_VS_MATCH_PATH = os.getenv('HF_MENU_VS_MATCH_PATH', "fc24-menu_vs_match_model")
