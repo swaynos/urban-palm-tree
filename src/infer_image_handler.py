@@ -8,7 +8,7 @@ from game_state.game_state import GameState, get_game_states
 from game_state.menu_state import MenuState, get_menu_states
 from image import ImageWrapper
 from image_classification_inference import ImageClassifier
-from yolo_object_detector import YoloImageClassifier
+from yolo_object_detector import YoloObjectDetector
 from app_io import get_prompt
 from shared_resources import exit_event
 
@@ -33,7 +33,8 @@ async def infer_image_handler():
     menu_states_classes = get_menu_states()
     game_status_image_classifier = ImageClassifier(config.HF_MENU_VS_MATCH_PATH, config.MENU_VS_MATCH_FILENAME, menu_vs_match_classes)
     menu_status_image_classifier = ImageClassifier(config.HF_MENU_CLASSIFICATION_PATH, config.IN_MENU_CLASSIFICATION_FILENAME, menu_states_classes)
-    squad_selection_image_detection = YoloImageClassifier(config.HF_SQUAD_SELECTION_PATH, config.SQUAD_SELECTION_FILENAME)
+    squad_selection_image_detection = YoloObjectDetector(config.HF_SQUAD_SELECTION_PATH, config.SQUAD_SELECTION_FILENAME)
+    
     while(not exit_event.is_set()):
         try:
             # Update statistics for monitoring purposes
@@ -44,7 +45,10 @@ async def infer_image_handler():
             if (not latest_screenshot.empty()):
                 image = await latest_screenshot.get()
 
-            if(image is not None):
+            if(image is None):
+                logger.warning("There is not a latest screenshot to infer from")
+                await asyncio.sleep(1) # Sleep 1 second before trying again
+            else:
                 game_status_response, game_status_predictions = await game_status_image_classifier.classify_image(image)
                 
                 # Append the current inferred state as a tuple
@@ -100,9 +104,7 @@ async def infer_image_handler():
                     biased_state['MenuState'] = menu_status_response.name
                     await inferred_game_state.update_data(biased_state)
                     logger.info(f"Updated inferred_game_state['ManuState'] to {biased_state['MenuState']}")
-            else:
-                logger.warning("There is not a latest screenshot to infer from")
-            
+
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
             logger.error(argument)

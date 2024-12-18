@@ -76,8 +76,11 @@ class RunningApplication():
         if (not self.pid):
             raise ValueError("app/pid must be set, try running find_app before get_window")
         
-        # TODO: There is a bug if all windows from the application are minimized
-        
+        # TODO: Fix the following Bugs:
+        # 1. There is a bug if all windows from the application are minimized
+        # 2. There is a bug if VSCode is running in a separate space as the windowed application
+        # 3. There is probably a bug if the windows application is running in another space
+
         # Retrieve window information
         window_list = Quartz.CGWindowListCopyWindowInfo(
             Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,

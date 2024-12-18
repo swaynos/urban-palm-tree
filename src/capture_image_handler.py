@@ -48,5 +48,8 @@ async def capture_image_handler(app: RunningApplication):
             await latest_screenshot.put(image)
 
             await asyncio.sleep(0)  # Yield control back to the event loop
+        except ValueError as argument:
+            logger.error(argument)
+            await asyncio.sleep(10) # Sleep 10 seconds before trying again
         except Exception as argument:
             logger.error(argument)
