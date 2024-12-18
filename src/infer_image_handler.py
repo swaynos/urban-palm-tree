@@ -8,7 +8,7 @@ from game_state.game_state import GameState, get_game_states
 from game_state.menu_state import MenuState, get_menu_states
 from image import ImageWrapper
 from image_classification_inference import ImageClassifier
-from yolo_image_classification_inference import YoloImageClassifier
+from yolo_object_detector import YoloImageClassifier
 from app_io import get_prompt
 from shared_resources import exit_event
 
