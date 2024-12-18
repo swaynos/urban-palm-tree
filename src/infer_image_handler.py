@@ -42,6 +42,7 @@ async def infer_image_handler():
             infer_image_thread_statistics.count += 1
 
             image: ImageWrapper = None
+
             if (not latest_screenshot.empty()):
                 image = await latest_screenshot.get()
 
@@ -64,8 +65,12 @@ async def infer_image_handler():
 
                 # Check the score of the latest inferred states
                 # This works by running the difference of the gamestate scores along both axes to determine a bias
-                # TODO: Minor improvement idea, also find the similarity of the last states
-                # TODO: OR consider VERY HIGH prediction score of the last state as a bias. Maybe consider weighting towards freshness?
+                # Effectively this will debounce the game state so that a single weak prediction will not toggle state. 
+                # TODO: Improvement Ideas
+                # 1. Create a single YOLO model which will understand imporant elements that exist either in a match, or in key menu screens to infer the game.
+                # 2. Bake all state decision making into a single model, so that the model can predict with the last states as parameters
+                # 3. Minor improvement idea, also find the similarity of the last states
+                # 4. OR consider VERY HIGH prediction score of the last state as a bias. Maybe consider weighting towards freshness?
                 latest_states_sum = 0
                 latest_states = inferred_memory_collection.peek_n_latest(len(config.N_LAST_STATES_WEIGHTS))
                 for i, state in enumerate(latest_states):
