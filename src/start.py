@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 import signal
 import threading
@@ -16,8 +17,11 @@ elif platform == "linux" or platform == "linux2":
 from game_controller import GameController
 import config
 
-# configure logging for the application
-logging.basicConfig(level=config.LOG_LEVEL, format='%(asctime)s - %(levelname)s - %(message)s', filename='start.log', filemode='w')
+# Configure logging for the application
+# Create a unique filename with a timestamp
+timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+log_filename = f'start_{timestamp}.log'
+logging.basicConfig(level=config.LOG_LEVEL, format='%(asctime)s - %(levelname)s - %(message)s', filename=log_filename, filemode='w')
 
 # Begin Program
 app = RunningApplication()

@@ -32,6 +32,9 @@ Automate gameplay on your PS5 by capturing the stream, analyzing frames, and mak
 4. Push your branch: `git push origin feature-name`.
 5. Create a pull request.
 
+# TODO
+- [ ] Rewrite infer_image_handler.py and the game control logic to utilize the new YOLO model
+
 ## License
 This project is licensed under the GNU General Public License v3.0
 
