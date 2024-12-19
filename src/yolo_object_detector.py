@@ -1,5 +1,8 @@
 import asyncio
 import logging
+import numpy as np
+
+from PIL import Image as PILImage
 from ultralytics import YOLO
 from huggingface_hub import hf_hub_download
 
@@ -15,7 +18,8 @@ class YoloObjectDetector:
         Initialize the YOLO object detector.
 
         Args:
-            modelpath (str): Path to the model on HuggingFace Hub.
+            modelpath (str): Path to the model on HuggingFa
+            ce Hub.
             filename (str): Model file name.
             conf_threshold (float): Confidence threshold for detections.
         """
@@ -24,25 +28,25 @@ class YoloObjectDetector:
         self.conf_threshold = conf_threshold
         logger.info(f"YOLO model loaded from {self.modelpath}")
 
-    async def detect_objects(self, image_wrapper):
+    async def detect_objects(self, image: PILImage):
         """
         Run the YOLO model to detect objects in the input image.
 
         Args:
-            image_wrapper (ImageWrapper): An instance of ImageWrapper with a valid image.
+            image_wrapper (PILImage): An instance of Pillow.Image
 
         Returns:
             List[dict]: List of detections with class names, confidence scores, and bounding boxes.
         """
         logger.debug("Starting object detection on the provided image.")
 
-        # Retrieve the PIL image directly from the ImageWrapper
-        image = image_wrapper._image
+        image_array = np.array(image)
 
         # Run prediction in an executor thread to make it async-compatible
+        result = self.model.predict(source=image_array, imgsz=640, conf=0.25)
         results = await asyncio.to_thread(
             self.model.predict,
-            source=image,
+            source=image_array,
             conf=self.conf_threshold
         )
 

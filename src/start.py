@@ -48,7 +48,7 @@ async def main():
     await asyncio.gather(
         capture_image_handler(app),
         infer_image_handler(),
-        controller_input_handler(app, game)
+        #controller_input_handler(app, game)
     )
 
 if __name__ == "__main__":

@@ -36,8 +36,7 @@ async def controller_input_handler(app: RunningApplication, game: GameController
     # Import shared resources required for managing the lifecycle of the thread.
     # Moving the import to within the function ensures that the module is only imported when 
     # the function is called, which allows patching of these variables in tests.
-    # `inferred_game_state` holds the most recent inferred game state
-    from shared_resources import inferred_memory_collection, inferred_game_state
+    from shared_resources import latest_actions_sequence
 
     ongoing_action = None
 

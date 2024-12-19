@@ -27,3 +27,8 @@ asynctest = "^0.13.0"
 python-dotenv = "^1.0.1"
 torch = "2.2.2"
 ultralytics = "^8.3.50"
+numpy = "^1.23"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+
