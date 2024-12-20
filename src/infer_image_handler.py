@@ -1,11 +1,17 @@
 import asyncio
 import logging
+from typing import List
+
+import GameController
 import config
+from game_action.action import Action
+from game_state.squad_battles_tracker import SquadBattlesTracker
+from game_strategy.squad_battles_selection_menu_strategy import SquadBattlesSelectionMenuStrategy
 import monitoring
 
 from game_state.game_state import GameState, get_game_states
 from game_state.menu_state import MenuState, get_menu_states
-from game_state.game_system_state import GameSystemState, get_game_system_states
+from game_state.game_system_state import GameSystemState
 from image import ImageWrapper
 from image_classification_inference import ImageClassifier
 from PIL import Image as PILImage
@@ -14,7 +20,8 @@ from shared_resources import exit_event
 
 infer_image_thread_statistics = monitoring.Statistics()
 
-async def infer_image_handler():
+# TODO: Convert to class
+async def infer_image_handler(game: GameController):
     """
     In this thread we will perform an image recognition task on the most recent screenshot captured by the `capture_image_thread`.
     It uses the `ImageWrapper` and `get_prompt` functions from the `app_io` module to grab a prompt and create an image object.
@@ -26,7 +33,8 @@ async def infer_image_handler():
     # Moving the import to within the function ensures that the module is only imported when 
     # the function is called, which allows patching of these variables in tests.
     # `latest_screenshot` holds the most recent screenshot to be processed for inference
-    from shared_resources import latest_screenshot
+    # TODO: Better manage dependency injection
+    from shared_resources import latest_screenshot, latest_actions_sequence
     
     while(not exit_event.is_set()):
         try:
@@ -43,20 +51,29 @@ async def infer_image_handler():
                 logger.warning("There is not a latest screenshot to infer from")
                 await asyncio.sleep(1) # Sleep 1 second before trying again
             else:
-                await start_image_inference(image, logger)
+                await start_image_inference(image, logger, game)
 
             await asyncio.sleep(0)  # Yield control back to the event loop
         except Exception as argument:
             logger.error(argument)
 
-async def start_image_inference(image: ImageWrapper, logger: logging.Logger):
+async def start_image_inference(image: ImageWrapper, logger: logging.Logger, game: GameController):
+    # Import shared resources required for managing the lifecycle of the thread.
+    # Moving the import to within the function ensures that the module is only imported when 
+    # the function is called, which allows patching of these variables in tests.
+    # `latest_actions_sequence` holds the most recent screenshot to be processed for inference
+    # TODO: Better manage dependency injection
+    from shared_resources import latest_actions_sequence
+
     game_system_state = await infer_game_system_state(image)
 
     if game_system_state == GameSystemState.UNKNOWN:
         logger.debug("An unknown game system state has been detected")
     elif game_system_state == GameSystemState.IN_MENU_SQUAD_BATTLES_OPPONENT_SELECTION:
         squad_battles_opponent_selection_state = await infer_squad_selection_menu_state(image)
-        # TODO: Implement game_actions based on the inferred state
+        strategy = SquadBattlesSelectionMenuStrategy(squad_battles_opponent_selection_state)
+        actions = strategy.determine_action_from_state(game)
+        await latest_actions_sequence.put(actions)
     else:
         logger.debug(f"The game system state is {game_system_state}")
 
@@ -99,8 +116,16 @@ async def infer_game_system_state(image: ImageWrapper):
             return GameSystemState.UNKNOWN
     else:
         raise ValueError(f"Unknown game state: {game_status_response}")
-   
 
+# TODO: Unit Test is_point_in_bbox()
+# Function to check if a point is within a bounding box
+def is_point_in_bbox(point, bbox):
+    x, y = point
+    left, upper, right, lower = bbox
+    return left <= x <= right and upper <= y <= lower
+
+   
+# TODO: The squad selection methods can be moved into their own Class
 async def infer_squad_selection_menu_state(image_wrapper: ImageWrapper):
     """
     Infer the state of the squad selection menu by detecting objects near predefined points.
@@ -109,7 +134,7 @@ async def infer_squad_selection_menu_state(image_wrapper: ImageWrapper):
         image_wrapper (ImageWrapper): An image wrapper containing the input image.
 
     Returns:
-        dict: Mapping of points (A-F) to detected bounding boxes or None if no box contains the point.
+        SquadBattlesTracker: the state of the squad battles menu from the object detection model.
     """
     # Setup
     # Define the cropping box for squad battles selection
@@ -118,9 +143,11 @@ async def infer_squad_selection_menu_state(image_wrapper: ImageWrapper):
     detector = YoloObjectDetector(config.HF_SQUAD_SELECTION_PATH, config.SQUAD_SELECTION_FILENAME)
     image = image_wrapper._image
     # Step 1: Validate image dimensions
+    # We understand what to do if the dimensions are 720p
     if image.size == (1280, 720):
         # Resize the image to 2560x1440
         image = image.resize((2560, 1440), PILImage.Resampling.LANCZOS)
+    # If the dimension is not 1440p, then halt execution
     elif image.size != (2560, 1440):
         raise ValueError("Input image dimensions are expected to be 2560x1440.")
 
@@ -130,7 +157,58 @@ async def infer_squad_selection_menu_state(image_wrapper: ImageWrapper):
     # Step 3: Initialize the YOLO model and run predictions
     detections = await detector.detect_objects(cropped_image) 
 
-    raise NotImplementedError("Infer squad selection menu state")
-    # TODO: Complete the method
-    # 1. Send detections to strategy
-    # 2. Return the result collection of actions
+    return evaluate_squad_selection_menu_state_detections(detector.model.names, detections)
+
+# TODO: Unit Test evaluate_detections()
+def evaluate_squad_selection_menu_state_detections(class_names, detections) -> SquadBattlesTracker:
+    # The squad selection menu can be thought of as the following:
+    # [0] [1]
+    # [2] [3]
+    # [4] [5]
+    # Where 0->5 could be arranged as a collection of tuples
+    points = [(73, 130),
+    (220, 130),
+    (73, 330),
+    (220, 330),
+    (73, 470),
+    (220, 470)]
+    
+    squad_battles_tracker = SquadBattlesTracker()
+
+    # For each detection made evaluate the points A->F to see
+    # if any fall within the bounding box.
+    # Iterate through each detection made
+    for detection in detections:
+        detection_bbox = detection['bbox']  # Modify this as per your detection output structure
+
+        # Check each point to see if it's within the detection bounding box
+        for index, point in enumerate(points):
+            if is_point_in_bbox(point, detection_bbox):
+
+                # Squad Selected
+                if (detection['class'] == class_names[1]):
+                    if (index % 2 == 0):
+                        squad_battles_tracker.current_col = 0
+                    else:
+                        squad_battles_tracker.current_col = 1
+                    if (index < 2):
+                        squad_battles_tracker.current_row = -1 # the current tracker wasn't built to support the top row
+                    elif (index < 4):
+                        squad_battles_tracker.current_row = 0
+                    elif (index < 6):
+                        squad_battles_tracker.current_row = 1
+                    else:
+                        squad_battles_tracker.current_row = -1 # if unknown, lets just assume the top row
+                
+                # Squad Played
+                elif (detection['class'] == class_names[0]):
+                    if (index == 2):
+                        squad_battles_tracker.grid[0][0] = True
+                    elif (index == 3):
+                        squad_battles_tracker.grid[0][1] = True
+                    elif (index == 4):
+                        squad_battles_tracker.grid[1][0] = True
+                    elif (index == 5):
+                        squad_battles_tracker.grid[1][1] = True
+
+    return squad_battles_tracker

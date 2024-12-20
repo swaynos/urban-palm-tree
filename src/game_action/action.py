@@ -1,44 +1,44 @@
-from playstation_io import PlaystationIO
+from game_controller import GameController
+from pynput import keyboard as kb
+
 import asyncio
 import time
 
 from typing import List
 
-# TODO: Redundancy in this implementation
 class Action:
-    def __init__(self, button_presses: List[str]):
-        self.button_presses = button_presses
-        self.io = PlaystationIO()
+    """
+    A class to handle actions within a game using the GameController.
 
-    async def execute_action(self, delay: float = 0.1):
-        try:
-            # Execute each button press in the list
-            for button in self.button_presses:
-                if hasattr(self.io, button):
-                    # Press the button
-                    self.io.tap(getattr(self.io, button))
-                    await asyncio.sleep(delay)
-        except asyncio.CancelledError:
-            # Handle cancellation if needed
-            self.io.release_all_buttons()  # Ensure all buttons are released
-        finally:
-            self.io.release_all_buttons()  # Ensure all buttons are released at the end
+    Attributes:
+        steps (List[List[kb.KeyCode], float]): A list of steps where each step consists of a list of key codes and a float for timing.
+        game_controller (GameController): An instance of GameController to manage game interactions.
 
-    # TODO: Test if this works as expected
-    async def execute_action_over_time(self, duration: float, delay: float = 0.1):
+    Methods:
+        execute_action(buttons: List[kb.KeyCode]): 
+            Presses the specified buttons one at a time using the game controller.
+
+        execute_action_over_time(buttons: List[kb.KeyCode], duration: float): 
+            Holds down all of the specified buttons for a given duration, periodically checking the elapsed time.
+    """
+    def __init__(self, game_controller: GameController, steps: List[tuple[List[kb.KeyCode], float]]):
+        self.steps = steps
+        self.game_controller = game_controller
+
+    async def apply_steps(self):
+        for step in self.steps:
+            if (step[1] > 0):
+                await self.execute_action_over_time(step[0], step[1])
+            else:
+                await self.execute_action(step[0])
+
+    async def execute_action(self, buttons: List[kb.KeyCode]):
+        for button in buttons:
+            await self.game_controller.press_button(button)
+        
+    async def execute_action_over_time(self, buttons: List[kb.KeyCode], duration: float):
         end_time = time.time() + duration
-        try:
-            while time.time() < end_time:
-                # Execute each button press in the list
-                for button in self.button_presses:
-                    if hasattr(self.io, button):
-                        # Press the button
-                        self.io.tap(getattr(self.io, button))
-                        await asyncio.sleep(delay)  # Adjust delay as needed
-        except asyncio.CancelledError:
-            # Handle cancellation if needed
-            self.io.release_all_buttons()  # Ensure all buttons are released
-        finally:
-            self.io.release_all_buttons()  # Ensure all buttons are released at the end
+        while time.time() < end_time: #TODO: I think we should remove this extra loop
+            await self.game_controller.hold_buttons(buttons, duration)
 
     

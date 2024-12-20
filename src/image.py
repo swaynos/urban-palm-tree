@@ -16,7 +16,6 @@ def load_template_grayscale(template_name):
     template = cv2.imread("screenshots/{}".format(template_name))
     return cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
 
-# TODO: Cache templates
 # TODO: Unit Tests
 class ImageWrapper:
     """A class to represent an image. Wraps a PIL Image and a MatLike which is used by OpenCV."""
