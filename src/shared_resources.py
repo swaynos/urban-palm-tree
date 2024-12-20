@@ -60,8 +60,23 @@ class ThreadSafeDeque:
 
 # Resources shared across all tasks
 latest_screenshot = Queue(maxsize=1)
-inferred_memory_collection = ThreadSafeDeque(maxsize=10)  # Replace 10 with the desired number of memories
-inferred_game_state = SharedObject()
+"""
+A queue to hold the most recent screenshot to be processed for inference.
+
+This queue has a maximum size of 1, ensuring that it can only store
+the latest screenshot. If a new screenshot is added when the queue
+is full, the oldest screenshot will be discarded.
+"""
+
+latest_actions_sequence = Queue(maxsize=1)
+"""
+A queue to hold the most recent sequence of actions.
+
+This queue has a maximum size of 1, ensuring that it can only store
+the latest sequence of actions. If a new action sequence is added 
+when the queue is full, the oldest sequence will be discarded, allowing 
+the system to retain only the most current actions for processing.
+"""
 
 # Event object for determining when the application is ready to exit
 exit_event = Event()

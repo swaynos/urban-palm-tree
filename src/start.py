@@ -47,7 +47,7 @@ signal.signal(signal.SIGTERM, exit_handler)
 async def main():
     await asyncio.gather(
         capture_image_handler(app),
-        infer_image_handler(),
+        infer_image_handler(game),
         controller_input_handler(app, game)
     )
 
