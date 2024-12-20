@@ -40,10 +40,14 @@ class YoloObjectDetector:
         """
         logger.debug("Starting object detection on the provided image.")
 
-        image_array = np.array(image)
+        # Ensure the image is in RGB mode
+        if image.mode == "RGBA" or image.mode == "P":
+            image = image.convert("RGB")
+
+        # Convert the image to a NumPy array
+        image_array = np.array(image) 
 
         # Run prediction in an executor thread to make it async-compatible
-        result = self.model.predict(source=image_array, imgsz=640, conf=0.25)
         results = await asyncio.to_thread(
             self.model.predict,
             source=image_array,
@@ -51,6 +55,7 @@ class YoloObjectDetector:
         )
 
         detections = self._parse_results(results)
+        
         return detections
 
     def _parse_results(self, results):

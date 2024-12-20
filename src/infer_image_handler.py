@@ -115,7 +115,7 @@ async def infer_squad_selection_menu_state(image_wrapper: ImageWrapper):
     # Define the cropping box for squad battles selection
     # (left, upper, right, lower)
     SQUAD_BATTLES_SELECTION_BBOX = (140, 363, 430, 908) 
-    squad_selection_image_detection = YoloObjectDetector(config.HF_SQUAD_SELECTION_PATH, config.SQUAD_SELECTION_FILENAME)
+    detector = YoloObjectDetector(config.HF_SQUAD_SELECTION_PATH, config.SQUAD_SELECTION_FILENAME)
     image = image_wrapper._image
     # Step 1: Validate image dimensions
     if image.size == (1280, 720):
@@ -128,11 +128,9 @@ async def infer_squad_selection_menu_state(image_wrapper: ImageWrapper):
     cropped_image = image.crop(SQUAD_BATTLES_SELECTION_BBOX)
 
     # Step 3: Initialize the YOLO model and run predictions
-    detector = YoloObjectDetector(config.HF_SQUAD_SELECTION_PATH, config.SQUAD_SELECTION_FILENAME)
     detections = await detector.detect_objects(cropped_image) 
 
-    # TODO: Complete the method
-    # 2. Crop the image to the desired region
-    # 3. Run the YOLO model against the desired region
-    
     raise NotImplementedError("Infer squad selection menu state")
+    # TODO: Complete the method
+    # 1. Send detections to strategy
+    # 2. Return the result collection of actions
