@@ -6,10 +6,6 @@ class GenericGameStrategy:
     def __init__(self, game_system_state: GameSystemState):
         self.menu_state = game_system_state
 
-    def describe_strategy():
-        description_str = "Generic Game Strategy"
-        return description_str
-
     def determine_action_from_state(self, game_controller: GameController) -> list[Action]: 
         steps = []
 

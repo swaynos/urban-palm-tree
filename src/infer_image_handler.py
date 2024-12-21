@@ -65,7 +65,7 @@ async def start_image_inference(image: ImageWrapper, logger: logging.Logger, gam
     # TODO: Better manage dependency injection
     from shared_resources import latest_actions_sequence
 
-    game_system_state = await infer_game_system_state(image)
+    game_system_state = await infer_game_system_state(image, logger)
 
     if game_system_state == GameSystemState.UNKNOWN:
         logger.warning("An unknown game system state has been detected")
@@ -82,7 +82,7 @@ async def start_image_inference(image: ImageWrapper, logger: logging.Logger, gam
         strategy = InMatchStrategy(game_system_state)
 
         logger.info(f"The game system state is {game_system_state}, \
-                     and will use the {strategy.describe_strategy()}.")
+                     and will use the In Match Strategy.")
         
         actions = strategy.determine_action_from_state(game)
         await latest_actions_sequence.put(actions)
@@ -90,12 +90,13 @@ async def start_image_inference(image: ImageWrapper, logger: logging.Logger, gam
         strategy = GenericGameStrategy(game_system_state)
 
         logger.info(f"The game system state is {game_system_state}, \
-                     and will use the {strategy.describe_strategy()}.")
+                     and will use the Generic Game Strategy.")
 
         actions = strategy.determine_action_from_state(game)
+
         await latest_actions_sequence.put(actions)
 
-async def infer_game_system_state(image: ImageWrapper):
+async def infer_game_system_state(image: ImageWrapper, logger: logging.Logger):
     """
     Infers the game state from the provided image using classifiers to determine whether 
     the overall system state of the Game. Currently, this function uses two classifiers, but 
@@ -131,9 +132,10 @@ async def infer_game_system_state(image: ImageWrapper):
         if menu_status_response in menu_state_mapping and menu_status_predictions.max() > 0.5:
             return menu_state_mapping[menu_status_response]
         else:
-            return GameSystemState.UNKNOWN
+            return GameSystemState.IN_MENU_OTHER
     else:
-        raise ValueError(f"Unknown game state: {game_status_response}")
+        logger.warning(f"Unknown game state: {game_status_response}")
+        return GameSystemState.UNKNOWN
 
 # TODO: Unit Test is_point_in_bbox()
 # Function to check if a point is within a bounding box
@@ -205,6 +207,7 @@ def evaluate_squad_selection_menu_state_detections(class_names, detections) -> S
 
                 # Squad Selected
                 if (detection['class'] == class_names[1]):
+
                     if (index % 2 == 0):
                         squad_battles_tracker.current_col = 0
                     else:
