@@ -1,11 +1,11 @@
 import asyncio
 import logging
-from typing import List
 
 import GameController
 import config
-from game_action.action import Action
 from game_state.squad_battles_tracker import SquadBattlesTracker
+from game_strategy.generic_game_strategy import GenericGameStrategy
+from game_strategy.in_match_strategy import InMatchStrategy
 from game_strategy.squad_battles_selection_menu_strategy import SquadBattlesSelectionMenuStrategy
 import monitoring
 
@@ -68,14 +68,32 @@ async def start_image_inference(image: ImageWrapper, logger: logging.Logger, gam
     game_system_state = await infer_game_system_state(image)
 
     if game_system_state == GameSystemState.UNKNOWN:
-        logger.debug("An unknown game system state has been detected")
+        logger.warning("An unknown game system state has been detected")
+        
     elif game_system_state == GameSystemState.IN_MENU_SQUAD_BATTLES_OPPONENT_SELECTION:
+        logger.info(f"The game system state is {game_system_state}, \
+                     and will use the {SquadBattlesSelectionMenuStrategy.describe_strategy()}.") 
         squad_battles_opponent_selection_state = await infer_squad_selection_menu_state(image)
         strategy = SquadBattlesSelectionMenuStrategy(squad_battles_opponent_selection_state)
         actions = strategy.determine_action_from_state(game)
         await latest_actions_sequence.put(actions)
+
+    elif game_system_state == GameSystemState.IN_MATCH_LIVE:
+        strategy = InMatchStrategy(game_system_state)
+
+        logger.info(f"The game system state is {game_system_state}, \
+                     and will use the {strategy.describe_strategy()}.")
+        
+        actions = strategy.determine_action_from_state(game)
+        await latest_actions_sequence.put(actions)
     else:
-        logger.debug(f"The game system state is {game_system_state}")
+        strategy = GenericGameStrategy(game_system_state)
+
+        logger.info(f"The game system state is {game_system_state}, \
+                     and will use the {strategy.describe_strategy()}.")
+
+        actions = strategy.determine_action_from_state(game)
+        await latest_actions_sequence.put(actions)
 
 async def infer_game_system_state(image: ImageWrapper):
     """
@@ -109,7 +127,7 @@ async def infer_game_system_state(image: ImageWrapper):
         }
         menu_status_response, menu_status_predictions = await menu_status_image_classifier.classify_image(image)
 
-        # If the classifications aren't strong (all less than 50%), then ignore them
+        # If the classifications aren't strong (all less than 50%), then we will ignore them
         if menu_status_response in menu_state_mapping and menu_status_predictions.max() > 0.5:
             return menu_state_mapping[menu_status_response]
         else:
@@ -149,7 +167,7 @@ async def infer_squad_selection_menu_state(image_wrapper: ImageWrapper):
         image = image.resize((2560, 1440), PILImage.Resampling.LANCZOS)
     # If the dimension is not 1440p, then halt execution
     elif image.size != (2560, 1440):
-        raise ValueError("Input image dimensions are expected to be 2560x1440.")
+        raise ValueError(f"Input image dimensions are expected to be 2560x1440. Received {image.width}x{image.height}.")
 
     # Step 2: Crop the image to the squad battles selection region
     cropped_image = image.crop(SQUAD_BATTLES_SELECTION_BBOX)

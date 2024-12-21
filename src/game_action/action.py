@@ -41,4 +41,8 @@ class Action:
         while time.time() < end_time: #TODO: I think we should remove this extra loop
             await self.game_controller.hold_buttons(buttons, duration)
 
-    
+    async def steps_to_string(self):
+        return_str = ""
+        for step in self.steps:
+            return_str += f"{step[0]} for {step[1]} seconds. "
+        return return_str

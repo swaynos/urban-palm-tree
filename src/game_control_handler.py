@@ -46,6 +46,7 @@ async def controller_input_handler(app: RunningApplication, game: GameController
             if(action is None):
                 logger.debug("There is not a latest action to execute")
             else:
+                logger.debug(await action.steps_to_string())
                 await action.apply_steps()
 
             await asyncio.sleep(0)  # Yield control back to the event loop

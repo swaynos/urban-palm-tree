@@ -18,7 +18,12 @@ class SquadBattlesSelectionMenuStrategy:
             tracker (SquadBattlesTracker): An instance of the tracker to be used for determining actions.
         """
         self.tracker = tracker
-
+        
+    @staticmethod
+    def describe_strategy():
+        description_str = "Squad Battles Selection Menu Strategy"
+        return description_str
+    
     # TODO: Write Unit Tests
     def determine_action_from_state(self, game_controller: GameController) -> list[Action]:
         """
