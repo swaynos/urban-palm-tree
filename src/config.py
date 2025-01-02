@@ -33,5 +33,6 @@ HF_MENU_VS_MATCH_PATH = os.getenv('HF_MENU_VS_MATCH_PATH', "fc24-menu_vs_match_m
 MENU_VS_MATCH_FILENAME = os.getenv('MENU_VS_MATCH_FILENAME', "menu_vs_match_model.h5")
 HF_SQUAD_SELECTION_PATH = os.getenv('HF_SQUAD_SELECTION_PATH', "fc24-squad_selection_model")
 SQUAD_SELECTION_FILENAME = os.getenv('SQUAD_SELECTION_FILENAME', "squad_selection_model.pt")
+SQUAD_SELECTION_CONF_THRESHOLD = float(os.getenv('SQUAD_SELECTION_CONF_THRESHOLD', 0.6))
 
 N_LAST_STATES_WEIGHTS = eval(os.getenv('N_LAST_STATES_WEIGHTS', "[1, .8, .6, .4, .2]"))

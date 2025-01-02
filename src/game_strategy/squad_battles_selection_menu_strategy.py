@@ -43,7 +43,10 @@ class SquadBattlesSelectionMenuStrategy:
         # Check the state of each match in the 2x2 grid
         for row in range(2):
             for col in range(2):
-                if self.tracker.grid[row][col]:  # If match played
+                 # If match played at the current selection
+                if self.tracker.current_row == row \
+                    and self.tracker.current_col == col \
+                        and self.tracker.grid[row][col]:
                     # Determine the action based on the match position
                     if row == 0 and col == 0:
                         selected_squad_valid = False
@@ -63,6 +66,6 @@ class SquadBattlesSelectionMenuStrategy:
                         break
         
         if (selected_squad_valid):
-            steps.append([[game_controller.io.Cross],0])
+            steps.append([[game_controller.io.Cross],150])
 
         return Action(game_controller, steps)

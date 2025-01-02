@@ -204,10 +204,8 @@ def evaluate_squad_selection_menu_state_detections(class_names, detections) -> S
         # Check each point to see if it's within the detection bounding box
         for index, point in enumerate(points):
             if is_point_in_bbox(point, detection_bbox):
-
                 # Squad Selected
                 if (detection['class'] == class_names[1]):
-
                     if (index % 2 == 0):
                         squad_battles_tracker.current_col = 0
                     else:

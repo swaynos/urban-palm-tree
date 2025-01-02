@@ -1,4 +1,5 @@
 import asyncio
+import config
 import logging
 import numpy as np
 
@@ -72,10 +73,11 @@ class YoloObjectDetector:
         for result in results:
             for box in result.boxes.data.tolist():
                 x1, y1, x2, y2, confidence, class_id = box
-                parsed_detections.append({
-                    "class": result.names[int(class_id)],
-                    "confidence": confidence,
-                    "bbox": [x1, y1, x2, y2]
-                })
+                if confidence > config.SQUAD_SELECTION_CONF_THRESHOLD:
+                    parsed_detections.append({
+                        "class": result.names[int(class_id)],
+                        "confidence": confidence,
+                        "bbox": [x1, y1, x2, y2]
+                    })
         logger.debug(f"Detections: {parsed_detections}")
         return parsed_detections
