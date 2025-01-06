@@ -1,13 +1,13 @@
 import aiofiles
 import numpy as np
 import base64
+import config
 import cv2
 import io
+import time
+
 from PIL.Image import Image as PILImage
-
 from skimage.metrics import structural_similarity as ssim
-
-import config
 
 image_format = "PNG"
 
@@ -20,6 +20,7 @@ def load_template_grayscale(template_name):
 class ImageWrapper:
     """A class to represent an image. Wraps a PIL Image and a MatLike which is used by OpenCV."""
     def __init__(self, image, saved_path=None):
+        self._timestamp:float = time.time()
         if isinstance(image, PILImage):
             self._image = image
             self._imageArray = np.array(image)
@@ -29,6 +30,10 @@ class ImageWrapper:
         else:
             raise ValueError("Unsupported image type: must be a PIL.Image.Image or a numpy.ndarray")
         self.saved_path = saved_path
+
+    # Getters
+    def get_timestamp(self):
+        return self._timestamp
 
     # Image manipulation
     def scaled_as_base64(self, width=640, height=360, encoding ='utf-8'):

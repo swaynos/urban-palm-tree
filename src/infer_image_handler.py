@@ -75,7 +75,7 @@ async def start_image_inference(image: ImageWrapper, logger: logging.Logger, gam
                      and will use the {SquadBattlesSelectionMenuStrategy.describe_strategy()}.") 
         squad_battles_opponent_selection_state = await infer_squad_selection_menu_state(image)
         strategy = SquadBattlesSelectionMenuStrategy(squad_battles_opponent_selection_state)
-        actions = strategy.determine_action_from_state(game)
+        actions = strategy.determine_action_from_state(image.get_timestamp(), game)
         await latest_actions_sequence.put(actions)
 
     elif game_system_state == GameSystemState.IN_MATCH_LIVE:
@@ -84,7 +84,7 @@ async def start_image_inference(image: ImageWrapper, logger: logging.Logger, gam
         logger.info(f"The game system state is {game_system_state}, \
                      and will use the In Match Strategy.")
         
-        actions = strategy.determine_action_from_state(game)
+        actions = strategy.determine_action_from_state(image.get_timestamp(), game)
         await latest_actions_sequence.put(actions)
     else:
         strategy = GenericGameStrategy(game_system_state)
@@ -92,7 +92,7 @@ async def start_image_inference(image: ImageWrapper, logger: logging.Logger, gam
         logger.info(f"The game system state is {game_system_state}, \
                      and will use the Generic Game Strategy.")
 
-        actions = strategy.determine_action_from_state(game)
+        actions = strategy.determine_action_from_state(image.get_timestamp(), game)
 
         await latest_actions_sequence.put(actions)
 

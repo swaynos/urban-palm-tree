@@ -21,9 +21,10 @@ class Action:
         execute_action_over_time(buttons: List[kb.KeyCode], duration: float): 
             Holds down all of the specified buttons for a given duration, periodically checking the elapsed time.
     """
-    def __init__(self, game_controller: GameController, steps: List[tuple[List[kb.KeyCode], float]]):
+    def __init__(self, image_timestamp: float, infer_timestamp:float, game_controller: GameController, steps: List[tuple[List[kb.KeyCode], float]]):
         self.steps = steps
         self.game_controller = game_controller
+        self.timestamps = [image_timestamp, infer_timestamp]
 
     async def apply_steps(self):
         for step in self.steps:
