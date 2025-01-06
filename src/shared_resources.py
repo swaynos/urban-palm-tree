@@ -1,5 +1,7 @@
 from asyncio import Event, Queue
 from collections import deque
+from game_action.action import Action
+from image import ImageWrapper
 from threading import Lock
 
 # TODO: Split file into package
@@ -59,7 +61,7 @@ class ThreadSafeDeque:
 
 
 # Resources shared across all tasks
-latest_screenshot = Queue(maxsize=1)
+latest_screenshot: Queue[ImageWrapper] = Queue(maxsize=1)
 """
 A queue to hold the most recent screenshot to be processed for inference.
 
@@ -68,7 +70,7 @@ the latest screenshot. If a new screenshot is added when the queue
 is full, the oldest screenshot will be discarded.
 """
 
-latest_actions_sequence = Queue(maxsize=1)
+latest_actions_sequence: Queue[Action] = Queue(maxsize=1)
 """
 A queue to hold the most recent sequence of actions.
 
