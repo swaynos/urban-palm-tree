@@ -1,5 +1,5 @@
 import asyncio
-import config
+import utilities.config as config
 import logging
 import numpy as np
 
