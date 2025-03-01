@@ -1,4 +1,4 @@
-import config
+import utilities.config as config
 import logging
 import os
 import pyscreenshot as ImageGrab

@@ -14,7 +14,7 @@ HF_API_KEY= os.getenv('HF_API_KEY')
 HF_USERNAME = os.getenv('HF_USERNAME')
 
 # global configs
-APP_NAME = os.getenv('APP_NAME', "Chiaki")
+APP_NAME = os.getenv('APP_NAME', "chiaki-ng")
 APP_HEADER_HEIGHT = int(os.getenv('APP_HEADER_HEIGHT', 0))
 APP_RESIZE_REQUIRED = os.getenv('APP_RESIZE_REQUIRED', 'False') == 'True'
 SAVE_SCREENSHOTS = os.getenv('SAVE_SCREENSHOTS', 'False') == 'True'

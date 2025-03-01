@@ -6,7 +6,7 @@ from game_controller import GameController
 from game_control_handler import controller_input_handler
 from game_state import GameState, MenuState
 from macos_app import RunningApplication
-from playstation_io import PlaystationIO
+from utilities.playstation_io import PlaystationIO
 from shared_resources import exit_event
 
 class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):

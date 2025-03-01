@@ -2,20 +2,15 @@ import asyncio
 import datetime
 import logging
 import signal
-import threading
-from sys import platform
 
-# urban-palm-tree imports
-from shared_resources import exit_event
-from capture_image_handler import capture_image_handler
-from game_control_handler import controller_input_handler
-from infer_image_handler import infer_image_handler
-if platform == "darwin":
-    from macos_app import RunningApplication
-elif platform == "linux" or platform == "linux2":
-    from linux_app import RunningApplication
-from game_controller import GameController
-import config
+from utilities.shared_thread_resources import exit_event
+from handlers.capture_image_handler import capture_image_handler
+from handlers.game_control_handler import controller_input_handler
+from handlers.infer_image_handler import infer_image_handler
+
+from utilities.macos_app import RunningApplication
+from controllers.game_flow_controller import GameFlowController
+import utilities.config as config
 
 # Configure logging for the application
 # Create a unique filename with a timestamp
@@ -26,7 +21,7 @@ logging.basicConfig(level=config.LOG_LEVEL, format='%(asctime)s - %(levelname)s 
 # Begin Program
 app = RunningApplication()
 app.warm_up(config.APP_NAME)
-game = GameController()         
+game = GameFlowController()         
 
 # Define sigint/sigterm handler
 def exit_handler(signum, frame):

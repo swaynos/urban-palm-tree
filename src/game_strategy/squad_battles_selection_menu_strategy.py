@@ -1,6 +1,6 @@
 import time
 from game_action.action import Action
-from game_controller import GameController
+from controllers.game_flow_controller import GameFlowController
 from game_state.squad_battles_tracker import SquadBattlesTracker
 
 class SquadBattlesSelectionMenuStrategy:
@@ -26,7 +26,7 @@ class SquadBattlesSelectionMenuStrategy:
         return description_str
     
     # TODO: Write Unit Tests
-    def determine_action_from_state(self, image_timestamp: float, game_controller: GameController) -> list[Action]:
+    def determine_action_from_state(self, image_timestamp: float, game_controller: GameFlowController) -> list[Action]:
         """
         Determines a list of actions to execute based on the current state of the grid in the tracker.
 

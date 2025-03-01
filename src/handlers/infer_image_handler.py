@@ -1,27 +1,26 @@
+import aiofiles
 import asyncio
 import logging
 
-import GameController
-import config
+from game_state.game_state import GameState, get_game_states
+from game_state.game_system_state import GameSystemState
+from game_state.menu_state import MenuState, get_menu_states
 from game_state.squad_battles_tracker import SquadBattlesTracker
 from game_strategy.generic_game_strategy import GenericGameStrategy
 from game_strategy.in_match_strategy import InMatchStrategy
 from game_strategy.squad_battles_selection_menu_strategy import SquadBattlesSelectionMenuStrategy
-import monitoring
-
-from game_state.game_state import GameState, get_game_states
-from game_state.menu_state import MenuState, get_menu_states
-from game_state.game_system_state import GameSystemState
-from image import ImageWrapper
-from image_classification_inference import ImageClassifier
-from PIL import Image as PILImage
-from yolo_object_detector import YoloObjectDetector
-from shared_resources import exit_event
+from inference.yolo_object_detector import YoloObjectDetector
+import utilities.config as config
+import utilities.monitoring as monitoring
+from controllers.game_flow_controller import GameFlowController
+from utilities.image import ImageWrapper
+from inference.image_classification_inference import ImageClassifier
+from utilities.shared_thread_resources import exit_event
 
 infer_image_thread_statistics = monitoring.Statistics()
 
 # TODO: Convert to class
-async def infer_image_handler(game: GameController):
+async def infer_image_handler(game: GameFlowController):
     """
     In this thread we will perform an image recognition task on the most recent screenshot captured by the `capture_image_thread`.
     It uses the `ImageWrapper` and `get_prompt` functions from the `app_io` module to grab a prompt and create an image object.
@@ -34,7 +33,7 @@ async def infer_image_handler(game: GameController):
     # the function is called, which allows patching of these variables in tests.
     # `latest_screenshot` holds the most recent screenshot to be processed for inference
     # TODO: Better manage dependency injection
-    from shared_resources import latest_screenshot, latest_actions_sequence
+    from utilities.shared_thread_resources import latest_screenshot
     
     while(not exit_event.is_set()):
         try:
@@ -57,13 +56,13 @@ async def infer_image_handler(game: GameController):
         except Exception as argument:
             logger.error(argument)
 
-async def start_image_inference(image: ImageWrapper, logger: logging.Logger, game: GameController):
+async def start_image_inference(image: ImageWrapper, logger: logging.Logger, game: GameFlowController):
     # Import shared resources required for managing the lifecycle of the thread.
     # Moving the import to within the function ensures that the module is only imported when 
     # the function is called, which allows patching of these variables in tests.
     # `latest_actions_sequence` holds the most recent screenshot to be processed for inference
     # TODO: Better manage dependency injection
-    from shared_resources import latest_actions_sequence
+    from utilities.shared_thread_resources import latest_actions_sequence
 
     game_system_state = await infer_game_system_state(image, logger)
 
@@ -165,8 +164,7 @@ async def infer_squad_selection_menu_state(image_wrapper: ImageWrapper):
     # Step 1: Validate image dimensions
     # We understand what to do if the dimensions are 720p
     if image.size == (1280, 720):
-        # Resize the image to 2560x1440
-        image = image.resize((2560, 1440), PILImage.Resampling.LANCZOS)
+        image_wrapper.resize(2560, 1440)
     # If the dimension is not 1440p, then halt execution
     elif image.size != (2560, 1440):
         raise ValueError(f"Input image dimensions are expected to be 2560x1440. Received {image.width}x{image.height}.")
@@ -231,3 +229,4 @@ def evaluate_squad_selection_menu_state_detections(class_names, detections) -> S
                         squad_battles_tracker.grid[1][1] = True
 
     return squad_battles_tracker
+

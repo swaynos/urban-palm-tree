@@ -1,15 +1,13 @@
 import asyncio
 import logging
-from sys import platform
+from dispatch import dispatch_async, dispatch_get_main_queue
+from concurrent.futures import Future
 from time import time
 
-import config
-from image import ImageWrapper
-if platform == "darwin":
-    from macos_app import RunningApplication
-elif platform == "linux" or platform == "linux2":
-    from linux_app import RunningApplication
-import monitoring
+import utilities.config as config
+from utilities.image import ImageWrapper
+from utilities.macos_app import RunningApplication
+import utilities.monitoring as monitoring
 
 capture_image_thread_statistics = monitoring.Statistics()
 
@@ -24,7 +22,7 @@ async def capture_image_handler(app: RunningApplication):
     # Import shared resources required for managing the lifecycle of the thread
     # `exit_event` is an event flag used to gracefully terminate the loop
     # `latest_screenshot` holds the most recent screenshot to be processed for inference
-    from shared_resources import exit_event, latest_screenshot
+    from utilities.shared_thread_resources import exit_event, latest_screenshot
 
     while(not exit_event.is_set()):
         logger.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
@@ -33,7 +31,8 @@ async def capture_image_handler(app: RunningApplication):
             app.activate()
             
             logger.debug("capture_image_thread: Grabbing a screenshot")
-
+            
+            # Capture the image on the main thread
             image = ImageWrapper(app.get_image_from_window())
             
             screenshot_filename = f"{config.SCREENSHOTS_DIR}new-screenshot{time()}.png"
@@ -46,10 +45,8 @@ async def capture_image_handler(app: RunningApplication):
                 await latest_screenshot.get()
 
             await latest_screenshot.put(image)
-
-            await asyncio.sleep(0)  # Yield control back to the event loop
-        except ValueError as argument:
-            logger.error(argument)
-            await asyncio.sleep(10) # Sleep 10 seconds before trying again
+            
+            # Even if the value is 0, we need to yield control back to the event loop
+            await asyncio.sleep(config.CAPTURE_IMAGE_DELAY) 
         except Exception as argument:
             logger.error(argument)

@@ -1,6 +1,6 @@
 import time
 from game_action.action import Action
-from game_controller import GameController
+from controllers.game_flow_controller import GameFlowController
 from game_state.game_system_state import GameSystemState
 
 class InMatchStrategy:
@@ -11,7 +11,7 @@ class InMatchStrategy:
         description_str = "In Match Strategy"
         return description_str
 
-    def determine_action_from_state(self, image_timestamp:float, game_controller: GameController) -> list[Action]: 
+    def determine_action_from_state(self, image_timestamp:float, game_controller: GameFlowController) -> list[Action]: 
         steps = []
 
         # TODO: Implement logging of decisions based on state
