@@ -4,7 +4,7 @@ import aiohttp
 import json
 import re
 
-import config
+from utilities import config
 from game_state.menu_state import MenuState
 from game_state.game_state import get_game_states_str
 from game_state.match_state import get_match_states_str

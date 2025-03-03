@@ -7,13 +7,13 @@ from PIL import Image as PILImage
 from queue import Queue
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
 
-from game_controller import GameController
-from game_control_handler import controller_input_handler
-from game_state.game_state import GameState
-from image import ImageWrapper
-from infer_image_handler import infer_image_handler
-from macos_app import RunningApplication
-from shared_resources import exit_event, latest_screenshot, inferred_game_state, inferred_memory_collection
+from controllers.game_flow_controller import GameFlowController
+from handlers.game_control_handler import controller_input_handler
+from game_state import GameState
+from utilities.macos_app import RunningApplication
+from utilities.shared_thread_resources import exit_event, latest_screenshot, inferred_game_state, inferred_memory_collection
+from utilities.image import ImageWrapper
+from handlers.infer_image_handler import infer_image_handler
 
 # Static values for testing
 screenshots_dir = "static_screenshots"

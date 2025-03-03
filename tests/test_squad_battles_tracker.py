@@ -1,7 +1,7 @@
 import unittest
 from io import StringIO
 import sys
-from src.game_state.squad_battles_tracker import SquadBattlesTracker
+from game_state.squad_battles_tracker import SquadBattlesTracker
 
 class TestSquadBattlesTracker(unittest.TestCase):
 

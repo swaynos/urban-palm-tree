@@ -121,5 +121,6 @@ class TestParseJsonResponse(unittest.TestCase):
 
     #     self.assertListEqual(in_menu_status_one, expected_in_menu_status)
     #     self.assertEqual(in_menu_status_two, "SQUAD-BATTLES-OPPONENT-SELECTION, UNKNOWN")
+    
 if __name__ == '__main__':
     unittest.main()

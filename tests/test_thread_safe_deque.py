@@ -2,7 +2,7 @@ import unittest
 from threading import Thread
 from time import sleep
 
-from src.shared_resources import ThreadSafeDeque
+from utilities.shared_thread_resources import ThreadSafeDeque
 
 class TestThreadSafeDeque(unittest.TestCase):
 

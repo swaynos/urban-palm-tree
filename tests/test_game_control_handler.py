@@ -2,17 +2,17 @@ import asyncio
 import unittest
 from unittest.mock import AsyncMock, Mock, call, patch
 
-from game_controller import GameController
-from game_control_handler import controller_input_handler
+from controllers.game_flow_controller import GameFlowController
+from handlers.game_control_handler import controller_input_handler
 from game_state import GameState, MenuState
-from macos_app import RunningApplication
+from utilities.macos_app import RunningApplication
 from utilities.playstation_io import PlaystationIO
-from shared_resources import exit_event
+from utilities.shared_thread_resources import exit_event
 
 class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.app = Mock(spec=RunningApplication)
-        self.game = Mock(spec=GameController)
+        self.game = Mock(spec=GameFlowController)
         self.game.io = Mock(spec=PlaystationIO)
 
         # Define some mocks for inferred game state for different scenarios
