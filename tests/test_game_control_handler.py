@@ -47,7 +47,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(asyncio.CancelledError):
             await handler_task  # This ensures that the task was cancelled correctly
 
-    @patch('shared_resources.inferred_game_state')
+    @patch('utilities.shared_thread_resources.inferred_game_state')
     async def test_controller_input_in_match(self, mock_inferred_game_state):
         mock_inferred_game_state.read_data = AsyncMock(return_value=self.mock_in_match)
         
@@ -64,7 +64,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         exit_event.set()
         task.cancel()
 
-    @patch('shared_resources.inferred_game_state')
+    @patch('utilities.shared_thread_resources.inferred_game_state')
     async def test_controller_input_in_menu(self, mock_inferred_game_state): 
         mock_inferred_game_state.read_data = AsyncMock(return_value=self.mock_in_menu)
         
@@ -81,7 +81,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         exit_event.set()
         task.cancel()
 
-    @patch('shared_resources.inferred_game_state')
+    @patch('utilities.shared_thread_resources.inferred_game_state')
     @patch('game_control_handler.create_ongoing_action')
     async def test_controller_input_cancel_action(self, mock_create_ongoing_action, mock_inferred_game_state):
         # Define a generator function for your responses
@@ -118,7 +118,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Clean up
         self.shared_cleanup(handler_task)
 
-    @patch('shared_resources.inferred_game_state')
+    @patch('utilities.shared_thread_resources.inferred_game_state')
     @patch('game_control_handler.create_ongoing_action')
     async def test_controller_input_no_cancel_on_completed_action(self, mock_create_ongoing_action, mock_inferred_game_state):
         # Define a generator function for your responses
@@ -156,7 +156,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Clean up
         self.shared_cleanup(handler_task)
 
-    @patch('shared_resources.inferred_game_state')
+    @patch('utilities.shared_thread_resources.inferred_game_state')
     async def test_controller_validate_input_received(self, mock_inferred_game_state):
         # Define a generator function for your responses
         def mock_inferred_game_state_responses():
@@ -181,7 +181,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Clean up
         self.shared_cleanup(handler_task)
 
-    @patch('shared_resources.inferred_game_state')
+    @patch('utilities.shared_thread_resources.inferred_game_state')
     async def test_controller_game_input_received(self, mock_inferred_game_state):
         # Define a generator function for your responses
         def mock_inferred_game_state_responses():
@@ -206,7 +206,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Clean up
         self.shared_cleanup(handler_task)
 
-    @patch('shared_resources.inferred_game_state')
+    @patch('utilities.shared_thread_resources.inferred_game_state')
     @patch('game_control_handler.create_ongoing_action')
     async def test_controller_navigates_sbc_navigates_next_opponent(self, mock_create_ongoing_action, mock_inferred_game_state):
         # Return mock inferred game state
@@ -255,7 +255,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Clean up
         self.shared_cleanup(handler_task)
 
-    @patch('shared_resources.inferred_game_state')
+    @patch('utilities.shared_thread_resources.inferred_game_state')
     @patch('game_control_handler.create_ongoing_action')
     async def test_controller_navigates_sbc_play_match(self, mock_create_ongoing_action, mock_inferred_game_state):
         # Return mock inferred game state

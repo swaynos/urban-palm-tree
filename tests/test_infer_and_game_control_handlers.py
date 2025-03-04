@@ -86,7 +86,7 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
         return None
     
     # Test method to verify depletion of the test image queue
-    @patch('shared_resources.latest_screenshot', new_callable=Mock)
+    @patch('shared_thread_resources.latest_screenshot', new_callable=Mock)
     @patch('image_classification_inference.ImageClassifier.classify_image', return_value=GameState.IN_MATCH)
     async def test_image_queue_depletes(self, mock_classify_image, mock_latest_screenshot):
         # Mock methods for latest_screenshot
@@ -97,7 +97,7 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
         # Assert that the image queue is empty after processing
         self.assertTrue(self.image_queue.empty())
 
-    @patch('shared_resources.latest_screenshot', new_callable=Mock)
+    @patch('shared_thread_resources.latest_screenshot', new_callable=Mock)
     @patch('game_controller.PlaystationIO', new_callable=Mock)
     async def test_game_loop(self, mock_playstation_io, mock_latest_screenshot):
         # Mock methods for latest_screenshot
