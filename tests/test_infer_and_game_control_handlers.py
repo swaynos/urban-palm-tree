@@ -11,7 +11,7 @@ from controllers.game_flow_controller import GameFlowController
 from handlers.game_control_handler import controller_input_handler
 from game_state import GameState
 from utilities.macos_app import RunningApplication
-from utilities.shared_thread_resources import exit_event, latest_screenshot, inferred_game_state, inferred_memory_collection
+from utilities.shared_thread_resources import SharedProgramData
 from utilities.image import ImageWrapper
 from handlers.infer_image_handler import infer_image_handler
 
@@ -37,6 +37,9 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
             os.path.join(screenshots_dir, path) for path in os.listdir(screenshots_dir) if path.endswith('.png')
         ]
         
+        # Instantiate the shared program data
+        self.shared_data = SharedProgramData()
+
         # Populate the image queue with ImageWrapper objects created from the static screenshot paths
         for path in self.static_screenshot_paths:
             image = ImageWrapper(PILImage.open(path), path)
@@ -44,7 +47,7 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
 
         # Since we set the exit_event to stop the handler execution, 
         # clear the exit event to reset it before running each test
-        exit_event.clear()
+        self.shared_data.exit_event.clear()
 
     async def monitor_last_image_seen(self):
         """
@@ -82,7 +85,7 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
             return self.last_image_seen
         
         # If the queue is empty, set the exit event to stop the handler execution
-        exit_event.set()
+        self.shared_data.exit_event.set()
         return None
     
     # Test method to verify depletion of the test image queue
@@ -92,7 +95,10 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
         # Mock methods for latest_screenshot
         mock_latest_screenshot.empty.return_value = False
         mock_latest_screenshot.get.side_effect = self.mock_get_image_from_queue
-        await infer_image_handler()
+
+        game = GameFlowController()
+
+        await infer_image_handler(game, self.shared_data)
 
         # Assert that the image queue is empty after processing
         self.assertTrue(self.image_queue.empty())
@@ -105,12 +111,13 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
         mock_latest_screenshot.get.side_effect = self.mock_get_image_from_queue
 
         app = Mock(spec=RunningApplication)
-        game = GameController()
+        game = GameFlowController()
         mock_playstation_io_instance = mock_playstation_io.return_value
 
+
         await asyncio.gather(
-            infer_image_handler(),
-            controller_input_handler(app, game),
+            infer_image_handler(game, self.shared_data),
+            controller_input_handler(app, game, self.shared_data),
             self.monitor_last_image_seen()
         )
 
@@ -118,7 +125,7 @@ class TestInferAndGameControlHandlers(unittest.IsolatedAsyncioTestCase):
 
         # Assertions
         self.assertTrue(mock_playstation_io_instance.tap.called, "Expected tap method to be called for controller input.")
-        self.assertTrue(inferred_game_state.data is not None, "Expected inferred_game_state to have been updated.")
+        self.assertTrue(self.shared_data.inferred_game_state.data is not None, "Expected inferred_game_state to have been updated.")
         # Additional assertions to check details about what was called on the mock.
     
     #TODO: before adding any new tests here, consider mocking the image classification

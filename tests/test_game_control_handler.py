@@ -7,13 +7,14 @@ from handlers.game_control_handler import controller_input_handler
 from game_state import GameState, MenuState
 from utilities.macos_app import RunningApplication
 from utilities.playstation_io import PlaystationIO
-from utilities.shared_thread_resources import exit_event
+from utilities.shared_thread_resources import SharedProgramData
 
 class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.app = Mock(spec=RunningApplication)
         self.game = Mock(spec=GameFlowController)
         self.game.io = Mock(spec=PlaystationIO)
+        self.shared_data = SharedProgramData()
 
         # Define some mocks for inferred game state for different scenarios
         self.mock_in_match = {
@@ -38,11 +39,11 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         }
 
         # Ensure the exit event is clear before each test
-        exit_event.clear() 
+        self.shared_data.exit_event.clear() 
          
     async def shared_cleanup(self, handler_task):
          # Common cleanup code
-        exit_event.set()  # Ensure you signal the handler to stop
+        self.shared_data.exit_event.set()  # Ensure you signal the handler to stop
         handler_task.cancel()
         with self.assertRaises(asyncio.CancelledError):
             await handler_task  # This ensures that the task was cancelled correctly
@@ -52,7 +53,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         mock_inferred_game_state.read_data = AsyncMock(return_value=self.mock_in_match)
         
         # Run the controller input handler in its own task
-        task = asyncio.create_task(controller_input_handler(self.app, self.game))
+        task = asyncio.create_task(controller_input_handler(self.app, self.game, self.shared_data))
 
         # Allow the handler priority on the event loop for a very short time
         await asyncio.sleep(0.01) 
@@ -61,7 +62,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(self.game.spin_in_circles.call_count, 0)
 
         # Clean up
-        exit_event.set()
+        self.shared_data.exit_event.set()
         task.cancel()
 
     @patch('utilities.shared_thread_resources.inferred_game_state')
@@ -69,7 +70,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         mock_inferred_game_state.read_data = AsyncMock(return_value=self.mock_in_menu)
         
         # Run the controller input handler in its own task
-        task = asyncio.create_task(controller_input_handler(self.app, self.game))
+        task = asyncio.create_task(controller_input_handler(self.app, self.game, self.shared_data))
 
         # Allow the handler priority on the event loop for a very short time
         await asyncio.sleep(0.1)
@@ -78,7 +79,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(self.game.io.tap.call_count, 0)
 
         # Clean up
-        exit_event.set()
+        self.shared_data.exit_event.set()
         task.cancel()
 
     @patch('utilities.shared_thread_resources.inferred_game_state')
@@ -101,7 +102,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         mock_create_ongoing_action.return_value = asyncio.create_task(asyncio.sleep(5))
 
         # Run the controller input handler
-        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game))
+        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game, self.shared_data))
 
         # Yield control back to the handler to let it run once
         await asyncio.sleep(0)
@@ -139,7 +140,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         mock_inferred_game_state.read_data = async_mock_data_sequence
 
         # Run the controller input handler
-        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game))
+        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game, self.shared_data))
 
         # Yield control back to the handler to let it run once
         await asyncio.sleep(0)
@@ -170,7 +171,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         mock_inferred_game_state.read_data = async_mock_data_sequence
 
         # Run the controller input handler
-        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game))
+        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game, self.shared_data))
 
         # Yield control back to the handler to let it run once
         await asyncio.sleep(0.1)
@@ -195,7 +196,7 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         mock_inferred_game_state.read_data = async_mock_data_sequence
 
         # Run the controller input handler
-        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game))
+        handler_task = asyncio.create_task(controller_input_handler(self.app, self.game, self.shared_data))
 
         # Yield control back to the handler to let it run once
         await asyncio.sleep(0.1)
@@ -229,14 +230,14 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Assign the `AsyncMock` to read_data
         mock_inferred_game_state.read_data = async_mock_data_sequence
 
-        # Use the real GameController class, but mock the input/output
-        game_controller = GameController()
+        # Use the real GameFlowController class, but mock the input/output
+        game_controller = GameFlowController()
         game_controller.io = Mock(spec=PlaystationIO)
         game_controller.squad_battles_tracker.grid = [[True, False], [False, False]] # Mock the grid position
         # row, col should be at 0,0
 
         # Run the controller input handler
-        handler_task = asyncio.create_task(controller_input_handler(self.app, game_controller))
+        handler_task = asyncio.create_task(controller_input_handler(self.app, game_controller, self.shared_data))
 
         # Yield control back to the handler to let it run
         await asyncio.sleep(1)
@@ -278,12 +279,12 @@ class TestGameControlHandler(unittest.IsolatedAsyncioTestCase):
         # Assign the `AsyncMock` to read_data
         mock_inferred_game_state.read_data = async_mock_data_sequence
 
-        # Use the real GameController class, but mock the input/output
-        game_controller = GameController()
+        # Use the real GameFlowController class, but mock the input/output
+        game_controller = GameFlowController()
         game_controller.io = Mock(spec=PlaystationIO)
 
         # Run the controller input handler
-        handler_task = asyncio.create_task(controller_input_handler(self.app, game_controller))
+        handler_task = asyncio.create_task(controller_input_handler(self.app, game_controller, self.shared_data))
 
         # Yield control back to the handler to let it run
         await asyncio.sleep(1)

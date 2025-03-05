@@ -3,7 +3,7 @@ import datetime
 import logging
 import signal
 
-from utilities.shared_thread_resources import exit_event
+from utilities.shared_thread_resources import SharedProgramData
 from handlers.capture_image_handler import capture_image_handler
 from handlers.game_control_handler import controller_input_handler
 from handlers.infer_image_handler import infer_image_handler
@@ -18,10 +18,13 @@ timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 log_filename = f'start_{timestamp}.log'
 logging.basicConfig(level=config.LOG_LEVEL, format='%(asctime)s - %(levelname)s - %(message)s', filename=log_filename, filemode='w')
 
+# Instantiate shared program data
+shared_data = SharedProgramData()
+
 # Begin Program
 app = RunningApplication()
 app.warm_up(config.APP_NAME)
-game = GameFlowController()         
+game = GameFlowController() 
 
 # Define sigint/sigterm handler
 def exit_handler(signum, frame):
@@ -33,7 +36,7 @@ def exit_handler(signum, frame):
     game.io.press(game.io.L2)
     game.io.press(game.io.Lstick.Up)
     game.io.press(game.io.Lstick.Left)
-    exit_event.set()
+    shared_data.exit_event.set()
     
 # Activate the handlers
 signal.signal(signal.SIGINT, exit_handler)
@@ -41,9 +44,9 @@ signal.signal(signal.SIGTERM, exit_handler)
 
 async def main():
     await asyncio.gather(
-        capture_image_handler(app),
-        infer_image_handler(game),
-        controller_input_handler(app, game)
+        capture_image_handler(app, shared_data),
+        infer_image_handler(game, shared_data),
+        controller_input_handler(app, game, shared_data)
     )
 
 if __name__ == "__main__":

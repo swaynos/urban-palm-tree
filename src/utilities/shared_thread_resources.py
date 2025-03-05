@@ -57,11 +57,19 @@ class ThreadSafeDeque:
         with self.lock:
             return list(self.deque)[-n:] if n <= len(self.deque) else list(self.deque)
 
+# Resources shared across all tasks.
+class SharedProgramData:
+    """
+    A singleton class that holds shared program data.
+    This data is accessible across threads safely.
+    """
+    _instance = None
 
-# Resources shared across all tasks
-latest_screenshot = Queue(maxsize=1)
-inferred_memory_collection = ThreadSafeDeque(maxsize=10)  # Replace 10 with the desired number of memories
-inferred_game_state = SharedObject()
-
-# Event object for determining when the application is ready to exit
-exit_event = Event()
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(SharedProgramData, cls).__new__(cls)
+            cls._instance.latest_screenshot = Queue(maxsize=1)
+            cls._instance.inferred_memory_collection = ThreadSafeDeque(maxsize=10)  # Replace 10 with the desired number of memories
+            cls._instance.inferred_game_state = SharedObject()
+            cls._instance.exit_event = Event()
+        return cls._instance

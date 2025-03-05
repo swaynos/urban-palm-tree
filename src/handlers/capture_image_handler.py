@@ -8,10 +8,11 @@ import utilities.config as config
 from utilities.image import ImageWrapper
 from utilities.macos_app import RunningApplication
 import utilities.monitoring as monitoring
+from utilities.shared_thread_resources import SharedProgramData
 
 capture_image_thread_statistics = monitoring.Statistics()
 
-async def capture_image_handler(app: RunningApplication):
+async def capture_image_handler(app: RunningApplication, shared_data: SharedProgramData):
     """
     In this thread we will capture a screenshot of the desired application and stores it in a global variable for later use.
     It uses the `get_window` and `ImageWrapper` functions from the `app_io` module to grab the window and create an image object.
@@ -19,12 +20,7 @@ async def capture_image_handler(app: RunningApplication):
     """
     logger = logging.getLogger(__name__)
 
-    # Import shared resources required for managing the lifecycle of the thread
-    # `exit_event` is an event flag used to gracefully terminate the loop
-    # `latest_screenshot` holds the most recent screenshot to be processed for inference
-    from utilities.shared_thread_resources import exit_event, latest_screenshot
-
-    while(not exit_event.is_set()):
+    while(not shared_data.exit_event.is_set()):
         logger.debug(f"capture_image_thread: Has looped {capture_image_thread_statistics.count} times. Elapsed time is {capture_image_thread_statistics.get_time()}")
         capture_image_thread_statistics.count += 1
         try:
@@ -41,10 +37,10 @@ async def capture_image_handler(app: RunningApplication):
             # If the collection is full, attempt to remove images from the collection to free space.
             # This needs to be a loop in case there are multiple threads adding screenshots to this
             # collection at once.
-            while (latest_screenshot.full()):
-                await latest_screenshot.get()
+            while (shared_data.latest_screenshot.full()):
+                await shared_data.latest_screenshot.get()
 
-            await latest_screenshot.put(image)
+            await shared_data.latest_screenshot.put(image)
             
             # Even if the value is 0, we need to yield control back to the event loop
             await asyncio.sleep(config.CAPTURE_IMAGE_DELAY) 
