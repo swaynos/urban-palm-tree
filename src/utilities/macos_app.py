@@ -117,7 +117,6 @@ class RunningApplication():
             if not (activationResult):
                 raise RuntimeError("macOS app activation failed")
 
-    # TODO: call get_window later in the lifecycle
     def get_window(self) -> Window: 
         if (not self.pid):
             raise ValueError("app/pid must be set, try running find_app before get_window")
@@ -177,7 +176,8 @@ class RunningApplication():
     def get_image_from_window(self):
         """
         Returns an image of the given window, with any unwanted elements removed and resized to 540p resolution (960x540)).
-        
+        TODO: set the resized resolution to be configurable.
+
         Args:
             window (NSWindow): The window object for which the image should be captured.
             
