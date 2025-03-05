@@ -44,11 +44,10 @@ WANDB_API_KEY= os.getenv('WANDB_API_KEY')
 HF_API_KEY= os.getenv('HF_API_KEY')
 HF_USERNAME = os.getenv('HF_USERNAME')
 
-
-# Old configs, not sure if still used.
 # This delay will throttle the image capture thread if needed, and avoid overloading the system
 CAPTURE_IMAGE_THREAD_DELAY = int(os.getenv('CAPTURE_IMAGE_THREAD_DELAY', 0))
 
+# Old configs, not sure if still used.
 HF_MENU_CLASSIFICATION_PATH = os.getenv('HF_MENU_CLASSIFICATION_PATH', "fc24-in-menu_classification_model")
 IN_MENU_CLASSIFICATION_FILENAME = os.getenv('IN_MENU_CLASSIFICATION_FILENAME', "in-menu_classification_model.h5")
 HF_MENU_VS_MATCH_PATH = os.getenv('HF_MENU_VS_MATCH_PATH', "fc24-menu_vs_match_model")
