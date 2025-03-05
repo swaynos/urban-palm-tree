@@ -29,5 +29,5 @@ async def infer_image_handler(game: GameFlowController, shared_data: SharedProgr
     """
     logger = logging.getLogger(__name__)
 
-    pipeline = ImageInferencePipeline(game, shared_data.latest_screenshot, exit_event)
+    pipeline = ImageInferencePipeline(game, shared_data.latest_screenshot, shared_data.exit_event)
     await pipeline.start()
