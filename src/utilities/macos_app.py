@@ -1,7 +1,11 @@
+import ctypes
 import utilities.config as config
 import logging
 import pyscreenshot as ImageGrab
 import Quartz
+import Quartz.CoreGraphics as CG
+from PIL import Image
+import numpy as np
 
 from AppKit import NSRunningApplication, NSWorkspace, NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
 
@@ -173,40 +177,66 @@ class RunningApplication():
 
             return matched_windows[0]
 
-    def get_image_from_window(self):
-        """
-        Returns an image of the given window, with any unwanted elements removed and resized to 540p resolution (960x540)).
-        TODO: set the resized resolution to be configurable.
-
-        Args:
-            window (NSWindow): The window object for which the image should be captured.
-            
-        Returns:
-            A PIL Image object representing the screenshot of the given window.
-        """
-        if (not self.window):
-            logging.warn("This object's window is not set, attempting to run get_window")
-            self.window = self.get_window()
-            if not self.window:
-                raise ValueError("Unable to find window.")
-        
-        deltaX = self.window.X + self.window.Width
-        deltaY = self.window.Y + self.window.Height
-
-        # TODO: mac screencapture should support windowid with the 'l' flag.
-        #   -l      <windowid> Captures the window with windowid.
-        img = ImageGrab.grab(
-            backend="mac_screencapture", 
-            bbox =(self.window.X, self.window.Y, deltaX, deltaY)
+    def capture_window(self):
+        window_list = Quartz.CGWindowListCopyWindowInfo(
+            Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,
+            Quartz.kCGNullWindowID
         )
-        # Remove the top border from the image
-        cropped_img = img.crop((0, config.APP_HEADER_HEIGHT, img.width, img.height))
-        
-        # Resize the image to 540p resolution (960x540)
-        if (config.APP_RESIZE_REQUIRED):
-            resized_image = cropped_img.resize((960, 540))
-            final_image = resized_image
-        else:
-            final_image = cropped_img
 
-        return final_image
+        target_window = None
+        for window in window_list:
+            if window["kCGWindowOwnerPID"] == self.pid:
+                target_window = window
+                break
+
+        if not target_window:
+            raise ValueError("Window not found for PID:", self.pid)
+
+        bounds = target_window["kCGWindowBounds"]
+        x, y, width, height = int(bounds["X"]), int(bounds["Y"]), int(bounds["Width"]), int(bounds["Height"])
+
+        # Use CGRectMake to define the bounding box
+        image_rect = Quartz.CGRectMake(x, y, width, height)
+
+        # Capture the window as a CGImageRef
+        image_ref = Quartz.CGWindowListCreateImage(
+            image_rect,
+            Quartz.kCGWindowListOptionIncludingWindow,
+            target_window["kCGWindowNumber"],
+            Quartz.kCGWindowImageBoundsIgnoreFraming
+        )
+
+        if not image_ref:
+            raise RuntimeError("Failed to capture image.")
+
+        # Create a bitmap context
+        color_space = CG.CGColorSpaceCreateDeviceRGB()
+        context = CG.CGBitmapContextCreate(
+            None,
+            int(image_rect.size.width),
+            int(image_rect.size.height),
+            8,  # bits per component
+            0,  # bytes per row (0 means automatic calculation)
+            color_space,
+            CG.kCGImageAlphaPremultipliedLast
+        )
+
+        # Draw the image onto the context
+        CG.CGContextDrawImage(context, image_rect, image_ref)
+
+        # Release the color space
+        CG.CGColorSpaceRelease(color_space)
+
+        # Retrieve the resulting image from the context
+        result_image = CG.CGBitmapContextCreateImage(context)
+
+        # Convert to a PIL Image
+        width = CG.CGImageGetWidth(result_image)
+        height = CG.CGImageGetHeight(result_image)
+        bits_per_component = 8
+        bytes_per_row = width * 4
+        bitmap_data = CG.CGDataProviderCopyData(CG.CGImageGetDataProvider(result_image))
+        numpy_array = np.frombuffer(bitmap_data, dtype=np.uint8).reshape((height, width, 4))
+        pil_image = Image.fromarray(numpy_array, 'RGBA')
+        
+        return pil_image
