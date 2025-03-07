@@ -29,7 +29,7 @@ async def controller_input_handler(app: RunningApplication, game: GameFlowContro
     ongoing_action = None # This will be used to store an io task that is currently running
 
     while(not shared_data.exit_event.is_set()):
-        logger.debug(f"Has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
+        logger.debug(f"controller_input_handler has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
         controller_input_thread_statistics.count += 1
         try:
             current_game_state = await shared_data.inferred_game_state.read_data()
