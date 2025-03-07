@@ -29,7 +29,7 @@ async def capture_image_handler(app: RunningApplication, shared_data: SharedProg
             logger.debug("capture_image_thread: Grabbing a screenshot")
             
             # Capture the image on the main thread
-            image = ImageWrapper(app.get_image_from_window())
+            image = ImageWrapper(app.capture_window())
             
             screenshot_filename = f"{config.SCREENSHOTS_DIR}new-screenshot{time()}.png"
             await image.async_save_image(screenshot_filename)
