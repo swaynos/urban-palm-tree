@@ -265,6 +265,8 @@ class RunningApplication():
         pil_image = Image.fromarray(numpy_array, 'RGBA')
         
         # Resize the image to 540p resolution (960x540) if required
+        # TODO: Review the efficiency of buffering the entire bitmap in memory before resizing. 
+        # While this approach works, there are a few areas where I could optimize memory usage.
         if config.APP_RESIZE_REQUIRED:
             resized_image = pil_image.resize((960, 540))
             final_image = resized_image
