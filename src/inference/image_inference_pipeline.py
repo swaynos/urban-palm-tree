@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 
 from controllers.game_flow_controller import GameFlowController
 from inference.game_state_inference import GameStateInference
@@ -24,6 +25,7 @@ class ImageInferencePipeline:
                     image = await self.latest_screenshot_queue.get()
                     if image:
                         await self.process_image(image)
+                        self.logger.debug(f"Time elapsed for image inference: {image.compare_timestamp(time.time())}")
                     else:
                         self.logger.warning("No image available for inference.")
                 await asyncio.sleep(1)

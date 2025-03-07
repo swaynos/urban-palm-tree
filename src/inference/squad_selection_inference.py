@@ -19,13 +19,14 @@ class SquadSelectionInference(InferenceStep):
         
         # Step 1: Validate image dimensions
         _image = image._image # Unwrap the image
-        # If the image is 720p, then resize it to 1440p
-        if _image.size == (1280, 720):
-            image.resize(2560, 1440)
-        # If the dimension is not 1440p, then halt execution
-        elif _image.size != (2560, 1440):
-            raise ValueError(f"Input image dimensions are expected to be 2560x1440. Received {image.width}x{image.height}.")
-        # TODO: This image processing can be improved to better support many different resolutions
+        # TODO: Evaluate the future need for this model
+        # If this inference step is still needed, improve this code to better support many different resolutions
+        # # If the image is 720p, then resize it to 1440p
+        # if _image.size == (1280, 720):
+        #     image.resize(2560, 1440)
+        # # If the dimension is not 1440p, then halt execution
+        # elif _image.size != (2560, 1440):
+        #     raise ValueError(f"Input image dimensions are expected to be 2560x1440. Received {image.width}x{image.height}.")
 
         # Step 2: Crop the image to the squad battles selection region
         cropped_image = _image.crop(SQUAD_BATTLES_SELECTION_BBOX)
@@ -36,7 +37,7 @@ class SquadSelectionInference(InferenceStep):
         return self.evaluate_squad_selection_menu_state_detections(detector.model.names, detections)
     
     # TODO: Unit Test evaluate_detections()
-    def evaluate_squad_selection_menu_state_detections(class_names, detections) -> SquadBattlesTracker:
+    def evaluate_squad_selection_menu_state_detections(self, class_names, detections) -> SquadBattlesTracker:
         # The squad selection menu can be thought of as the following:
         # [0] [1]
         # [2] [3]
