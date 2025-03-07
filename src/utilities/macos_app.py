@@ -7,15 +7,7 @@ import Quartz.CoreGraphics as CG
 from PIL import Image
 import numpy as np
 
-from AppKit import NSRunningApplication, NSWorkspace, NSApplicationActivateAllWindows, NSApplicationActivateIgnoringOtherApps
-
-# window
-class Window:
-    def __init__(self):
-        self.Height = int(0)
-        self.Width = int(0)
-        self.X = int(0)
-        self.Y = int(0)
+from AppKit import NSRunningApplication, NSScreen, NSWorkspace
 
 class RunningApplication():
     def _retrieve_window_list_from_quartz(self):
@@ -119,9 +111,9 @@ class RunningApplication():
             logging.debug("{} is not active, attempting to activate.".format(config.APP_NAME))
             activationResult = self.app.activateWithOptions_(1)
             if not (activationResult):
-                raise RuntimeError("macOS app activation failed")
+                raise RuntimeError("macOS app activation failed")    
 
-    def get_window(self) -> Window: 
+    def get_window(self): 
         if (not self.pid):
             raise ValueError("app/pid must be set, try running find_app before get_window")
         
@@ -133,36 +125,33 @@ class RunningApplication():
 
         matched_windows = []
 
-        logging.debug(matched_windows)
-        
-        # Iterate through the window list and filter by the app's PID
         for window_info in window_list:
             window_pid = window_info["kCGWindowOwnerPID"]
             if window_pid == self.pid:
-                # Extract relevant wwdindow details (e.g., window ID, title, etc.)
-                window = Window()
-                window.Height = int(window_info["kCGWindowBounds"]["Height"])
-                window.Width = int(window_info["kCGWindowBounds"]["Width"])
-                window.X = int(window_info["kCGWindowBounds"]["X"])
-                window.Y = int(window_info["kCGWindowBounds"]["Y"])
-
+                window_width = window_info["kCGWindowBounds"]["Width"]
+                window_height = int(window_info["kCGWindowBounds"]["Height"])
                 # If any matched windows have non-sensical dimensions
                 # don't add them to the matched_windows list
-                if (window.Height > 270 and window.Width > 480):
-                    matched_windows.append(window)
+                if (window_height > 270 and window_width > 480):
+                    matched_windows.append(window_info)
 
-        matched_windows_len = len(matched_windows)
-        if (matched_windows_len> 0):
-            
-            if (matched_windows_len > 1):
+        matched_windows_length = len(matched_windows)
+        if (matched_windows_length > 0):
+            if (matched_windows_length > 1):
                 largest_dimension_value = 0
                 largest_window_index = None
-                logging.debug(f"More than one matched window was found, {matched_windows_len} total were found.\nWill return the largest window.") 
+                logging.debug(f"More than one matched window was found, {matched_windows_length} total were found.\nWill return the largest window.") 
                 for i, window in enumerate(matched_windows):
-                    logging.debug(f"Window {i+1}\nPosition: {window.X}, {window.Y}\nSize: {window.Width}x{window.Height}")
-                    if (window.Width * window.Height) > largest_dimension_value:
+                    window_width = window["kCGWindowBounds"]["Width"]
+                    window_height = window["kCGWindowBounds"]["Height"]
+                    window_x = window["kCGWindowBounds"]["X"]
+                    window_y = window["kCGWindowBounds"]["Y"]
+                    logging.debug(f"Window {i+1}\n\
+                                    Position: {window_x}, {window_y}\n\
+                                    Size: {window_width}x{window_height}")
+                    if (window_width + window_height) > largest_dimension_value:
                         largest_window_index = i
-                        largest_dimension_value = window.Width * window.Height
+                        largest_dimension_value = window_width + window_height
                 if (largest_window_index is not None):
                     self.window = matched_windows[largest_window_index]
                 else:
@@ -171,32 +160,69 @@ class RunningApplication():
             else:
                 self.window = matched_windows[0]
             
-            logging.debug(f"Matched window: {self.window}")
-            logging.debug(f"Window Position: {self.window.X}, {self.window.Y}")
-            logging.debug(f"Window Size: {self.window.Width}x{self.window.Height}")
+            window_bounds = self.window["kCGWindowBounds"]
 
-            return matched_windows[0]
+            logging.debug(f"Matched window: {window_bounds}")
+
+            return self.window
+
+    def get_image_from_window(self):
+        """
+        Returns an image of the given window, with any unwanted elements removed and resized to 540p resolution (960x540)).
+        TODO: set the resized resolution to be configurable.
+
+        Args:
+            window (NSWindow): The window object for which the image should be captured.
+            
+        Returns:
+            A PIL Image object representing the screenshot of the given window.
+        """
+        if (not self.window):
+            logging.warn("This object's window is not set, attempting to run get_window")
+            self.window = self.get_window()
+            if not self.window:
+                raise ValueError("Unable to find window.")
+        
+        deltaX = self.window.X + self.window.Width
+        deltaY = self.window.Y + self.window.Height
+
+        # TODO: mac screencapture should support windowid with the 'l' flag.
+        #   -l      <windowid> Captures the window with windowid.
+        img = ImageGrab.grab(
+            backend="mac_screencapture", 
+            bbox =(self.window.X, self.window.Y, deltaX, deltaY)
+        )
+        # Remove the top border from the image
+        cropped_img = img.crop((0, config.APP_HEADER_HEIGHT, img.width, img.height))
+        
+        # Resize the image to 540p resolution (960x540)
+        if (config.APP_RESIZE_REQUIRED):
+            resized_image = cropped_img.resize((960, 540))
+            final_image = resized_image
+        else:
+            final_image = cropped_img
+
+        return final_image
 
     def capture_window(self):
-        window_list = Quartz.CGWindowListCopyWindowInfo(
-            Quartz.kCGWindowListOptionOnScreenOnly | Quartz.kCGWindowListExcludeDesktopElements,
-            Quartz.kCGNullWindowID
-        )
-
-        target_window = None
-        for window in window_list:
-            if window["kCGWindowOwnerPID"] == self.pid:
-                target_window = window
-                break
-
-        if not target_window:
-            raise ValueError("Window not found for PID:", self.pid)
+        target_window = self.get_window()
 
         bounds = target_window["kCGWindowBounds"]
         x, y, width, height = int(bounds["X"]), int(bounds["Y"]), int(bounds["Width"]), int(bounds["Height"])
 
+        # Get the scale factor from the main screen (assumes your window is on the main screen)
+        # If needed, you can find which screen the window is on and query that screen’s backingScaleFactor
+        #scale = NSScreen.mainScreen().backingScaleFactor()
+        scale = 1
+        
+         # Convert point-based coordinates/size to device pixels
+        scaled_x = int(x * scale)
+        scaled_y = int(y * scale)
+        scaled_w = int(width * scale)
+        scaled_h = int(height * scale)
+
         # Use CGRectMake to define the bounding box
-        image_rect = Quartz.CGRectMake(x, y, width, height)
+        image_rect = Quartz.CGRectMake(scaled_x, scaled_y, scaled_w, scaled_h)
 
         # Capture the window as a CGImageRef
         image_ref = Quartz.CGWindowListCreateImage(
@@ -213,16 +239,17 @@ class RunningApplication():
         color_space = CG.CGColorSpaceCreateDeviceRGB()
         context = CG.CGBitmapContextCreate(
             None,
-            int(image_rect.size.width),
-            int(image_rect.size.height),
+            scaled_w,
+            scaled_h,
             8,  # bits per component
             0,  # bytes per row (0 means automatic calculation)
             color_space,
             CG.kCGImageAlphaPremultipliedLast
         )
 
-        # Draw the image onto the context
-        CG.CGContextDrawImage(context, image_rect, image_ref)
+        # Draw the captured image into the context
+        dst_rect = Quartz.CGRectMake(0, 0, scaled_w, scaled_h)
+        CG.CGContextDrawImage(context, dst_rect, image_ref)
 
         # Release the color space
         CG.CGColorSpaceRelease(color_space)
@@ -233,8 +260,6 @@ class RunningApplication():
         # Convert to a PIL Image
         width = CG.CGImageGetWidth(result_image)
         height = CG.CGImageGetHeight(result_image)
-        bits_per_component = 8
-        bytes_per_row = width * 4
         bitmap_data = CG.CGDataProviderCopyData(CG.CGImageGetDataProvider(result_image))
         numpy_array = np.frombuffer(bitmap_data, dtype=np.uint8).reshape((height, width, 4))
         pil_image = Image.fromarray(numpy_array, 'RGBA')
