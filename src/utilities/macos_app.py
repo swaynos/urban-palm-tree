@@ -210,11 +210,11 @@ class RunningApplication():
         bounds = target_window["kCGWindowBounds"]
         x, y, width, height = int(bounds["X"]), int(bounds["Y"]), int(bounds["Width"]), int(bounds["Height"])
 
+        # TODO: Remove the scaling code after testing on a few devices.
         # Get the scale factor from the main screen (assumes your window is on the main screen)
         # If needed, you can find which screen the window is on and query that screen’s backingScaleFactor
         #scale = NSScreen.mainScreen().backingScaleFactor()
         scale = 1
-        
          # Convert point-based coordinates/size to device pixels
         scaled_x = int(x * scale)
         scaled_y = int(y * scale)
@@ -264,4 +264,11 @@ class RunningApplication():
         numpy_array = np.frombuffer(bitmap_data, dtype=np.uint8).reshape((height, width, 4))
         pil_image = Image.fromarray(numpy_array, 'RGBA')
         
-        return pil_image
+        # Resize the image to 540p resolution (960x540) if required
+        if config.APP_RESIZE_REQUIRED:
+            resized_image = pil_image.resize((960, 540))
+            final_image = resized_image
+        else:
+            final_image = pil_image
+        
+        return final_image
