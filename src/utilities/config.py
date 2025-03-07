@@ -14,7 +14,7 @@ APP_HEADER_HEIGHT = int(os.getenv("APP_HEADER_HEIGHT", 0))
 # Flag - will the window be resized after capture
 # Default to false on the assumption CPU is more limited than storage performance.
 # TODO: Test this assumption on different hardware.
-APP_RESIZE_REQUIRED = os.getenv("APP_RESIZE_REQUIRED", "False").lower() == "true"
+APP_RESIZE_REQUIRED = os.getenv("APP_RESIZE_REQUIRED", "True").lower() == "true"
 
 # Delay in seconds between loops of capture_image_handler. This allows the user to throttle
 # the window focus and image capturing rate. Very useful for debugging.
