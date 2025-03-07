@@ -17,7 +17,6 @@ def load_template_grayscale(template_name):
     template = cv2.imread("screenshots/{}".format(template_name))
     return cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
 
-# TODO: Cache templates
 # TODO: Unit Tests
 class ImageWrapper:
     """A class to represent an image. Wraps a PIL Image and a MatLike which is used by OpenCV."""
@@ -69,6 +68,7 @@ class ImageWrapper:
         return image_base64
 
     # SSIM Comparisons
+    # TODO: If SSIM is still needed for this project, consider caching the templates
     def compare_region_ssim(self, template_name:str, x:int, y:int, width:int, height:int):
         """
         Compares an image to a template using structural similarity (SSIM).
@@ -132,6 +132,13 @@ class ImageWrapper:
 
         return norm_diff
     
+    def compare_timestamp(self, timestamp):
+        """
+        Compares the timestamp of the image to a given timestamp.
+        """
+        timestamp_difference = timestamp - self._timestamp
+        return timestamp_difference
+
     async def async_save_image(self, path: str):
         """
         Asynchronously saves an image to a file.
