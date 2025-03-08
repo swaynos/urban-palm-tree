@@ -31,11 +31,21 @@ Automate gameplay on your PS5 by capturing the stream, analyzing frames, and mak
 4. Push your branch: `git push origin feature-name`.
 5. Create a pull request.
 
-# TODO
+## TODO
 - [ ] Run inference on the new Rush model
 - [ ] Build the set of player actions that the bot can perform. Immediately, this will be pass, shoot, and move.
-- [ ] Optimize the inference time. The time between when the screenshot is captured to when an action is performed.
+- [X] Optimize the inference time. The time between when the screenshot is captured to when an action is performed.
 - [ ] Build another model that will take the output of the Rush model and determine the best action to perform.
+
+## Notes
+ - InferenceSteps modify their chain at the end of the infer() step.
+ ```
+    # From here the pipeline can be modified based on the game state
+    # old_next_step = self.next_step
+    # new_next_step = NewInferenceStep()
+    # new_next_step.set_next(old_next_step)
+    # self.set_next(new_next_step)
+```
 
 ## License
 This project is licensed under the GNU General Public License v3.0

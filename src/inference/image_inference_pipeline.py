@@ -2,19 +2,19 @@ import asyncio
 import logging
 import time
 
-from controllers.game_flow_controller import GameFlowController
+from controllers.game_strategy_controller import GameStrategyController
 from inference.game_state_inference import GameStateInference
 from inference.menu_state_inference import MenuStateInference
+from inference.rush_inference import RushInference
 from inference.squad_selection_inference import SquadSelectionInference
 from utilities.image import ImageWrapper
 
 class ImageInferencePipeline:
-    def __init__(self, game: GameFlowController, latest_screenshot_queue: asyncio.Queue, stop_event: asyncio.Event):
+    def __init__(self, game: GameStrategyController, latest_screenshot_queue: asyncio.Queue, stop_event: asyncio.Event):
         self.game = game
-        self.logger = logging.getLogger(__name__)
-        self.task_queue = asyncio.Queue()
         self.latest_screenshot_queue = latest_screenshot_queue
         self.stop_event = stop_event
+        self.logger = logging.getLogger(__name__)
 
     async def start(self):
         """Starts the inference pipeline."""
@@ -36,9 +36,8 @@ class ImageInferencePipeline:
 
     async def process_image(self, image: ImageWrapper):
         """Processes an image through the inference pipeline."""
-        first_inference = GameStateInference()
-        first_inference.set_next(MenuStateInference()).set_next(SquadSelectionInference())
+        first_inference = RushInference()
+        first_inference.set_next(GameStateInference()).set_next(MenuStateInference()).set_next(SquadSelectionInference())
 
-        result = await first_inference.execute(image, self.game)
-        await self.task_queue.put(result)
+        await first_inference.execute(image, self.game)
         

@@ -1,8 +1,10 @@
+import logging
 from controllers.game_flow_controller import GameFlowController
 from utilities.image import ImageWrapper
 
 class InferenceStep:
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self.next_step = None
 
     def set_next(self, next_step):
@@ -12,10 +14,9 @@ class InferenceStep:
 
     async def execute(self, image: ImageWrapper, game: GameFlowController):
         """Executes the inference step and passes results to the next step if available."""
-        result = await self.infer(image, game)
+        await self.infer(image, game)
         if self.next_step:
-            return await self.next_step.execute(image, game)
-        return result
+            await self.next_step.execute(image, game)
 
     async def infer(self, image: ImageWrapper, game: GameFlowController):
         """To be implemented by each inference type."""

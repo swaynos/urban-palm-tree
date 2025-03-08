@@ -8,7 +8,6 @@ from utilities.image import ImageWrapper
 
 class MenuStateInference(InferenceStep):
     async def infer(self, image: ImageWrapper, game: GameFlowController):
-        logger = logging.getLogger(__name__)
         menu_states_classes = get_menu_states()
         menu_status_image_classifier = ImageClassifier(
             config.HF_MENU_CLASSIFICATION_PATH, 

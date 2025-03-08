@@ -29,7 +29,7 @@ class YoloObjectDetector:
         self.conf_threshold = conf_threshold
         logger.info(f"YOLO model loaded from {self.modelpath}")
 
-    async def detect_objects(self, image: PILImage):
+    async def detect_objects(self, image: PILImage, parse_results_delegate=None):
         """
         Run the YOLO model to detect objects in the input image.
 
@@ -55,7 +55,11 @@ class YoloObjectDetector:
             conf=self.conf_threshold
         )
 
-        detections = self._parse_results(results)
+        # If a delegate is provided, use it to process detections
+        if parse_results_delegate:
+            detections = parse_results_delegate(results)
+        else:
+            detections = self._parse_results(results)
         
         return detections
 

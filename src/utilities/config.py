@@ -17,8 +17,8 @@ APP_HEADER_HEIGHT = int(os.getenv("APP_HEADER_HEIGHT", 0))
 APP_RESIZE_REQUIRED = os.getenv("APP_RESIZE_REQUIRED", "True").lower() == "true"
 
 # Delay in seconds between loops of capture_image_handler. This allows the user to throttle
-# the window focus and image capturing rate. Very useful for debugging.
-CAPTURE_IMAGE_DELAY = int(os.getenv("CAPTURE_IMAGE_DELAY", 1))
+# the window focus and image capturing rate.
+CAPTURE_IMAGE_THREAD_DELAY = int(os.getenv("CAPTURE_IMAGE_THREAD_DELAY", 1))
 
 # Flag - will screenshots be saved
 SAVE_SCREENSHOTS = os.getenv("SAVE_SCREENSHOTS", "True").lower() == "true"
@@ -44,8 +44,12 @@ WANDB_API_KEY= os.getenv('WANDB_API_KEY')
 HF_API_KEY= os.getenv('HF_API_KEY')
 HF_USERNAME = os.getenv('HF_USERNAME')
 
-# This delay will throttle the image capture thread if needed, and avoid overloading the system
-CAPTURE_IMAGE_THREAD_DELAY = int(os.getenv('CAPTURE_IMAGE_THREAD_DELAY', 0))
+# This delay will throttle the controller handler thread if needed, and avoid overloading the system
+CONTROLLER_INPUT_THREAD_DELAY = int(os.getenv('CONTROLLER_INPUT_THREAD_DELAY', 0))
+
+# FC25 - Rush YOLO Model
+HF_RUSH_DETECTION_PATH =  os.getenv('HF_RUSH_DETECTION_PATH', "fc25-rush_model")
+HF_RUSH_DETECTION_FILENAME = os.getenv('HF_RUSH_DETECTION_FILENAME', "fc25-rush.pt")
 
 # Old configs, not sure if still used.
 HF_MENU_CLASSIFICATION_PATH = os.getenv('HF_MENU_CLASSIFICATION_PATH', "fc24-in-menu_classification_model")
