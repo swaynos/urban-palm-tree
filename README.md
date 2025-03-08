@@ -32,10 +32,13 @@ Automate gameplay on your PS5 by capturing the stream, analyzing frames, and mak
 5. Create a pull request.
 
 ## TODO
-- [ ] Run inference on the new Rush model
+- [X] Run inference on the new Rush model
 - [ ] Build the set of player actions that the bot can perform. Immediately, this will be pass, shoot, and move.
+- [ ] RushInference.infer() should have the option to run the model locally, or from a service 
+- [ ] Create a notebook to run yolo_object_detector.py as a service (colab, or Jupyter on a local subnet)
 - [X] Optimize the inference time. The time between when the screenshot is captured to when an action is performed.
 - [ ] Build another model that will take the output of the Rush model and determine the best action to perform.
+- [ ] Fix tests
 
 ## Notes
  - InferenceSteps modify their chain at the end of the infer() step.
