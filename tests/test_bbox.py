@@ -1,6 +1,6 @@
 # test_bbox.py
 import unittest
-from src.utilities.bbox import is_point_in_bbox
+from utilities.bbox import is_point_in_bbox
 
 class TestIsPointInBbox(unittest.TestCase):
 
