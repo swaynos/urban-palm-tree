@@ -37,6 +37,13 @@ class ImageWrapper:
         self._image = self._image.resize((width, height), PILImage.Resampling.LANCZOS)
 
     # Image manipulation
+    def to_bytes(self) -> bytes:
+        """Convert a PIL Image to a byte array."""
+        img_byte_arr = io.BytesIO()
+        self._image.save(img_byte_arr, format=image_format)  # Save the image to a bytes buffer
+        img_byte_arr.seek(0)  # Seek to the beginning of the BytesIO buffer
+        return img_byte_arr.getvalue()  # Return the byte array
+    
     def scaled_as_base64(self, width=640, height=360, encoding ='utf-8'):
         """
         The scaled_as_base64 method scales the image (for better performance) 

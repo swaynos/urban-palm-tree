@@ -28,7 +28,7 @@ class ImageInferencePipeline:
                         self.logger.debug(f"Time elapsed for image inference: {image.compare_timestamp(time.time())}")
                     else:
                         self.logger.warning("No image available for inference.")
-                await asyncio.sleep(1)
+                        await asyncio.sleep(1)
             except Exception as e:
                 self.logger.error(f"Inference pipeline error: {e}")
             
