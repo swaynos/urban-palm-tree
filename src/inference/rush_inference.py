@@ -1,3 +1,4 @@
+import time
 import requests
 from controllers.game_strategy_controller import GameStrategyController
 from game_state.game_state import GameState
@@ -39,13 +40,20 @@ def parse_rush_model_results(results):
     return detections
 
 class RushInference(InferenceStep):
-    async def infer(self, image: ImageWrapper, game: GameStrategyController): 
+    async def infer(self, image: ImageWrapper, game: GameStrategyController):
+        before_timestamp = time.time()
+        self.logger.debug(f"Rush inference start. Image is {image.compare_timestamp(before_timestamp)} seconds stale.")
         if config.RUSH_INFERERENCE_USE_WEBSERVICE:
             # Send the image to the web service
             url = config.RUSH_INFERERENCE_WEBSERVICE_URL
             files = {'file': image.to_bytes()}
-            response = requests.post(url, files=files)
             
+            response = requests.post(url, files=files)
+            after_timestamp = time.time()
+
+            
+            self.logger.debug(f"Rush inference(service) took: {after_timestamp-before_timestamp} seconds")
+
             if response.status_code == 200:
                 yolo_detection_results = response.json()  # Return the response from the web service
             else:

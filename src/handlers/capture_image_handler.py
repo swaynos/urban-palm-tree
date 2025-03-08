@@ -42,6 +42,8 @@ async def capture_image_handler(app: RunningApplication, shared_data: SharedProg
 
             await shared_data.latest_screenshot.put(image)
             
+            logger.debug(f"capture_image_thread: Finished grabbing a screenshot. Image is {image.compare_timestamp(time())} seconds stale.")
+            
             # Even if the value is 0, we need to yield control back to the event loop
             await asyncio.sleep(config.CAPTURE_IMAGE_THREAD_DELAY) 
         except Exception as argument:
