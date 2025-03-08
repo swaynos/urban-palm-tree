@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "urban-palm-tree"
-version = "0.2.0"
+version = "0.3.0"
 description = "Your project description goes here."
 authors = ["John Paul Swaynos"]
 package-mode = false 
