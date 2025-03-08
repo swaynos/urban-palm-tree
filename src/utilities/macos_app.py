@@ -9,6 +9,8 @@ import numpy as np
 
 from AppKit import NSRunningApplication, NSScreen, NSWorkspace
 
+from utilities.image import ImageWrapper
+
 class RunningApplication():
     def _retrieve_window_list_from_quartz(self):
         """
@@ -263,12 +265,13 @@ class RunningApplication():
         bitmap_data = CG.CGDataProviderCopyData(CG.CGImageGetDataProvider(result_image))
         numpy_array = np.frombuffer(bitmap_data, dtype=np.uint8).reshape((height, width, 4))
         pil_image = Image.fromarray(numpy_array, 'RGBA')
+        wrapped_image = ImageWrapper(pil_image)
         
         # Resize the image to 540p resolution (960x540) if required
         # TODO: Review the efficiency of buffering the entire bitmap in memory before resizing. 
         # While this approach works, there are a few areas where I could optimize memory usage.
         if config.APP_RESIZE_REQUIRED:
-            resized_image = pil_image.resize((960, 540))
+            resized_image = wrapped_image.crop_and_resize_to_height(960, 540)
             final_image = resized_image
         else:
             final_image = pil_image

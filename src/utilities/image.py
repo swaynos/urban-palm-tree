@@ -5,6 +5,8 @@ import base64
 import cv2
 import io
 from PIL.Image import Image as PILImage
+from PIL import Image
+
 
 from skimage.metrics import structural_similarity as ssim
 
@@ -34,7 +36,38 @@ class ImageWrapper:
         self.saved_path = saved_path
 
     def resize(self, width, height):
-        self._image = self._image.resize((width, height), PILImage.Resampling.LANCZOS)
+        self._image = self._image.resize((width, height), Image.LANCZOS)
+
+    # Function to crop and resize the image to new size, while maintain the aspect ratio of 16x9
+    def crop_and_resize_to_height(self, width, height):
+        # TODO: Validate width, height are 16:9 aspect ratio?
+        original_width, original_height = self._image.size
+
+        aspect_ratio = 16 / 9
+
+        # Calculate new dimensions maintaining the aspect ratio
+        if original_width / original_height >= aspect_ratio:
+            # Image is wider than 16:9
+            new_height = original_height
+            new_width = int(original_height * aspect_ratio)
+        else:
+            # Image is taller than 16:9
+            new_width = original_width
+            new_height = int(original_width / aspect_ratio)
+        
+        # Calculate the cropping box to crop from the center
+        left = (original_width - new_width) / 2
+        top = (original_height - new_height) / 2
+        right = (original_width + new_width) / 2
+        bottom = (original_height + new_height) / 2
+
+        # Crop the image
+        cropped_img = self._image.crop((left, top, right, bottom))
+        
+        # Resize the image to new size
+        resized_img = cropped_img.resize((width, height), Image.LANCZOS)
+
+        return resized_img
 
     # Image manipulation
     def to_bytes(self) -> bytes:
