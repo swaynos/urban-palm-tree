@@ -11,7 +11,7 @@ async def infer_image_handler(game: GameStrategyController, shared_data: SharedP
     """
     This method initiates a thread dedicated to performing image recognition tasks.
     It consumes images from ```shared_thread_resources.latest_screenshot``` and processes
-    game state to ```shared_thread_resources.inferred_game_state```.
+    game state to the GameStrategyController.
     """
     logger = logging.getLogger(__name__)
 

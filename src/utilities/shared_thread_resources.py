@@ -69,7 +69,5 @@ class SharedProgramData:
         if cls._instance is None:
             cls._instance = super(SharedProgramData, cls).__new__(cls)
             cls._instance.latest_screenshot = Queue(maxsize=1)
-            cls._instance.inferred_memory_collection = ThreadSafeDeque(maxsize=10)  # Replace 10 with the desired number of memories
-            cls._instance.inferred_game_state = SharedObject()
             cls._instance.exit_event = Event()
         return cls._instance
