@@ -43,15 +43,14 @@ class RushInference(InferenceStep):
     async def infer(self, image: ImageWrapper, game: GameStrategyController):
         before_timestamp = time.time()
         self.logger.debug(f"Rush inference start. Image is {image.compare_timestamp(before_timestamp)} seconds stale.")
-        if config.RUSH_INFERERENCE_USE_WEBSERVICE:
+        if config.RUSH_INFERENCE_USE_WEBSERVICE:
             # Send the image to the web service
-            url = config.RUSH_INFERERENCE_WEBSERVICE_URL
+            url = config.RUSH_INFERENCE_WEBSERVICE_URL
             files = {'file': image.to_bytes()}
             
             response = requests.post(url, files=files)
             after_timestamp = time.time()
 
-            
             self.logger.debug(f"Rush inference(service) took: {after_timestamp-before_timestamp} seconds")
 
             if response.status_code == 200:

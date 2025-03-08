@@ -2,6 +2,7 @@ import asyncio
 import utilities.config as config
 import logging
 import numpy as np
+import torch
 
 from PIL import Image as PILImage
 from ultralytics import YOLO
@@ -19,13 +20,14 @@ class YoloObjectDetector:
         Initialize the YOLO object detector.
 
         Args:
-            modelpath (str): Path to the model on HuggingFa
-            ce Hub.
+            modelpath (str): Path to the model on HuggingFace Hub.
             filename (str): Model file name.
             conf_threshold (float): Confidence threshold for detections.
         """
         self.modelpath = hf_hub_download(modelpath, filename)
-        self.model = YOLO(self.modelpath)
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model = YOLO(self.modelpath).to(device)
+        logger.debug(f"Using device: {device}")
         self.conf_threshold = conf_threshold
         logger.info(f"YOLO model loaded from {self.modelpath}")
 
