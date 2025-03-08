@@ -1,5 +1,5 @@
 import logging
-from controllers.game_flow_controller import GameFlowController
+from controllers.game_strategy_controller import GameStrategyController
 from utilities.image import ImageWrapper
 
 class InferenceStep:
@@ -12,12 +12,12 @@ class InferenceStep:
         self.next_step = next_step
         return next_step  # Allow chaining
 
-    async def execute(self, image: ImageWrapper, game: GameFlowController):
+    async def execute(self, image: ImageWrapper, game: GameStrategyController):
         """Executes the inference step and passes results to the next step if available."""
         await self.infer(image, game)
         if self.next_step:
             await self.next_step.execute(image, game)
 
-    async def infer(self, image: ImageWrapper, game: GameFlowController):
+    async def infer(self, image: ImageWrapper, game: GameStrategyController):
         """To be implemented by each inference type."""
         raise NotImplementedError("Subclasses must implement `infer` method")
