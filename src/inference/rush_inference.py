@@ -1,4 +1,4 @@
-from controllers.game_flow_controller import GameFlowController
+from controllers.game_strategy_controller import GameStrategyController
 from game_state.game_state import GameState
 from inference.inference_step import InferenceStep
 from inference.yolo_object_detector import YoloObjectDetector
@@ -38,7 +38,7 @@ def parse_rush_model_results(results):
     return detections
 
 class RushInference(InferenceStep):
-    async def infer(self, image: ImageWrapper, game: GameFlowController):         
+    async def infer(self, image: ImageWrapper, game: GameStrategyController):         
         yolo_detector = YoloObjectDetector(config.HF_RUSH_DETECTION_PATH, config.HF_RUSH_DETECTION_FILENAME)
         yolo_detection_results = await yolo_detector.detect_objects(image._image, parse_results_delegate=parse_rush_model_results)
         self.logger.debug(f"Rush inference detection results: {yolo_detection_results}")
