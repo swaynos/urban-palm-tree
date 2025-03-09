@@ -65,11 +65,10 @@ class RushInference(InferenceStep):
         self.logger.debug(f"Rush inference detection results: {yolo_detection_results}")
 
         # If there are inference results, we are in a game. 
-        # A successful run of this model should have lots of detections, decided to use 2 for now.
-        if len(yolo_detection_results) > 2:
-            game.game_state = GameState.IN_MATCH
+        # A successful run of this model should have detections
+        if len(yolo_detection_results) > 0:
+            game.game_state_tracker.set_game_state(GameState.IN_MATCH)
 
             # Stop linked inference steps
             self.next_step = None
-            
             

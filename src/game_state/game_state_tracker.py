@@ -3,14 +3,12 @@ from . import GameState, MenuState, MatchState
 class GameStateTracker:
     
     def __init__(self):
+        # TODO: Use SharedObject() for thread safety
         self.current_game_state = GameState.IN_MENU
-        self.current_menu_state = MenuState.UNKOWN
+        self.current_menu_state = MenuState.UNKNOWN
         self.current_match_state = None
 
     def set_game_state(self, state):
-        # ToDo: provide confidence score, and include debouncing logic if score is low
-        # If confidence is high, set state immediately
-        # If confidence is low, and the state is changing, wait for a few frames before updating the value
         self.current_game_state = state
         if state == GameState.IN_MENU:
             self.current_match_state = None

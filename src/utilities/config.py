@@ -50,8 +50,8 @@ CONTROLLER_INPUT_THREAD_DELAY = int(os.getenv('CONTROLLER_INPUT_THREAD_DELAY', 0
 # FC25 - Rush YOLO Model
 HF_RUSH_DETECTION_PATH =  os.getenv('HF_RUSH_DETECTION_PATH', "fc25-rush_model")
 HF_RUSH_DETECTION_FILENAME = os.getenv('HF_RUSH_DETECTION_FILENAME', "fc25-rush.pt")
-RUSH_INFERENCE_USE_WEBSERVICE = os.getenv('RUSH_INFERERENCE_USE_WEBSERVICE', "False").lower() == "true"
-RUSH_INFERENCE_WEBSERVICE_URL = os.getenv('RUSH_INFERERENCE_WEBSERVICE_URL', "http://localhost:8000/predict")
+RUSH_INFERENCE_USE_WEBSERVICE = os.getenv('RUSH_INFERENCE_USE_WEBSERVICE', "False").lower() == "true"
+RUSH_INFERENCE_WEBSERVICE_URL = os.getenv('RUSH_INFERENCE_WEBSERVICE_URL', "http://localhost:8000/predict")
 
 # Old configs, not sure if still used.
 HF_MENU_CLASSIFICATION_PATH = os.getenv('HF_MENU_CLASSIFICATION_PATH', "fc24-in-menu_classification_model")

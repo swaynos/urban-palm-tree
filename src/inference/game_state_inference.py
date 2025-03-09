@@ -17,11 +17,11 @@ class GameStateInference(InferenceStep):
         game_status_response, _ = await game_status_image_classifier.classify_image(image)
 
         if game_status_response == GameState.IN_MATCH:
-            game.game_state = GameSystemState.IN_MATCH_OTHER
+            game.game_state.update_data(GameSystemState.IN_MATCH_OTHER)
         elif game_status_response == GameState.IN_MENU:
-            game.game_state = GameSystemState.IN_MENU_OTHER
+            game.game_state.update_data(GameSystemState.IN_MENU_OTHER)
         else:
             self.logger.warning(f"Unknown game state detected: {game_status_response}")
-            game.game_state = GameSystemState.UNKNOWN
+            game.game_state.update_data(GameSystemState.UNKNOWN)
 
         # From here the pipeline can be modified based on the game state. See notes in Readme.md

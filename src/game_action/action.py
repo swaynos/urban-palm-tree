@@ -24,7 +24,7 @@ class Action:
     """
     def __init__(self, image_timestamp: float, infer_timestamp:float, playstation_io: PlaystationIO, steps: List[tuple[List[kb.KeyCode], float]]):
         self.steps = steps
-        self.io = playstation_io
+        self.playstation_io = playstation_io
         self.timestamps = [image_timestamp, infer_timestamp]
 
     async def apply_steps(self):
