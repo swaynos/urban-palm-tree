@@ -2,7 +2,7 @@ from game_state.game_state import GameState
 from game_state.game_state_tracker import GameStateTracker
 from utilities.shared_thread_resources import SharedObject
 
-
+# TODO: Use logic from game_strategy objects to determine actions
 class GameStrategyController():
     def __init__(self):
         self.game_state_tracker = GameStateTracker()

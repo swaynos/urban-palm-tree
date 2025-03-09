@@ -12,6 +12,7 @@ class GameFlowController():
         """
         Builds a list of actions to be performed based on the current game state and strategy.
         """
+        # TODO: can game_strategy_controller return the actions directly? Using objects from game_strategy?
         actions = []
         
         # TODO: Determine if I want to continue to use these timestamps, and provide actual values
@@ -20,14 +21,24 @@ class GameFlowController():
 
         is_in_match = await game_strategy.is_in_match()
         if is_in_match:
-            random_bool = True #random.choice([True, False])
-            # Select nearest and pass
-            if random_bool:
-                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.L1, 0))
-                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0.05))
-                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 1))
-            else:
-                pass
+            # Loop it 10 times to avoid waiting for long inference
+            for i in range(10):
+                random_number = random.randint(1, 10)
+                # Select nearest and pass
+                if random_number > 1:
+                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.L1, 0))
+                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0.05))
+                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 1))
+                # Shoot it
+                else:
+                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Moon, 0.05))
+            # Spin in circles, then pass
+            # else:
+            #     [game_controller.io.L2, game_controller.io.Lstick.Left],0.5])
+            #     [[game_controller.io.L2, game_controller.io.Lstick.Up],0.5])
+            #     [[game_controller.io.L2, game_controller.io.Lstick.Right],0.5])
+            #     [[game_controller.io.L2, game_controller.io.Lstick.Down],0.5])
+            #     [[game_controller.io.Cross],0])
         else:
             actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0))
         
