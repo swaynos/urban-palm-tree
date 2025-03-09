@@ -1,10 +1,11 @@
-from controllers.game_flow_controller import GameFlowController
 from pynput import keyboard as kb
 
 import asyncio
 import time
 
 from typing import List
+
+from utilities.playstation_io import PlaystationIO
 
 class Action:
     """
@@ -21,9 +22,9 @@ class Action:
         execute_action_over_time(buttons: List[kb.KeyCode], duration: float): 
             Holds down all of the specified buttons for a given duration, periodically checking the elapsed time.
     """
-    def __init__(self, image_timestamp: float, infer_timestamp:float, game_controller: GameFlowController, steps: List[tuple[List[kb.KeyCode], float]]):
+    def __init__(self, image_timestamp: float, infer_timestamp:float, playstation_io: PlaystationIO, steps: List[tuple[List[kb.KeyCode], float]]):
         self.steps = steps
-        self.game_controller = game_controller
+        self.io = playstation_io
         self.timestamps = [image_timestamp, infer_timestamp]
 
     async def apply_steps(self):
@@ -35,12 +36,12 @@ class Action:
 
     async def execute_action(self, buttons: List[kb.KeyCode]):
         for button in buttons:
-            await self.game_controller.press_button(button)
+            await self.playstation_io.press_button(button)
         
     async def execute_action_over_time(self, buttons: List[kb.KeyCode], duration: float):
         end_time = time.time() + duration
         while time.time() < end_time: #TODO: I think we should remove this extra loop
-            await self.game_controller.hold_buttons(buttons, duration)
+            await self.playstation_io.hold_buttons(buttons, duration)
 
     async def steps_to_string(self):
         return_str = ""

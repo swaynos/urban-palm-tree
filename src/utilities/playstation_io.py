@@ -1,4 +1,5 @@
 import asyncio
+import time
 from typing import List
 from pynput import keyboard as kb
 
@@ -119,3 +120,26 @@ class PlaystationIO(kb.Controller):
             # Ensure the buttons are released at the end
             for button in buttons:
                 self.release(button)  
+
+    # TODO: Come up with a better name for this method
+    # This method can be re-used for multiple streams of input:
+    # For example, while pressing the left joystick to upper left, I also want to tap
+    # A every 50 ms, and then B every 200ms. How should that input be combined in a way 
+    # where the syntax doesn't get too messy?
+    # Note: two instances of this method can be run in parallel using asyncio.gather()
+    async def do_something_long(self, duration):
+        end_time = time.time() + duration
+        try:
+            while time.time() < end_time:
+                # Just garbage input to show a couple of techniques using pynput
+                with kb.Controller.pressed(kb.Key.shift, kb.KeyCode(char='\\')):
+                    kb.Controller.tap(kb.Key.enter)
+                    await asyncio.sleep(0.25)  # Keep it pressed for 0.25 seconds
+
+        except asyncio.CancelledError:
+            # Add any cleanup code if needed here when cancelled
+            # Notify about cancellation if needed
+            pass
+        finally:
+            self.release_all_buttons() # Ensure all buttons are released
+            pass

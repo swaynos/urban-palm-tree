@@ -30,11 +30,8 @@ async def controller_input_handler(app: RunningApplication, game_flow: GameFlowC
         logger.debug(f"controller_input_handler has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
         controller_input_thread_statistics.count += 1
         try:
-            actions = await game_flow.build_actions(game_strategy)
-            
-            if actions is not None and len(actions) > 0:
-                await game_flow.execute_actions(actions)
-                await asyncio.sleep(.05) # Sleep for 50ms to allow the game to handle the input
+            actions = await game_flow.build_actions_from_strategy(game_strategy)  
+            await game_flow.execute_actions(actions)
                 
             await asyncio.sleep(config.CONTROLLER_INPUT_THREAD_DELAY)  # Yield control back to the event loop
         except Exception as argument:
