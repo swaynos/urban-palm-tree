@@ -1,4 +1,5 @@
-from enum import Enum
+import asyncio
+from typing import List
 from pynput import keyboard as kb
 
 """
@@ -94,3 +95,27 @@ class PlaystationIO(kb.Controller):
         self.release(self.R2)
         self.release_joystick_direction(self.Lstick)
         self.release_joystick_direction(self.Rstick)
+
+    async def press_button(self, button: kb.KeyCode, duration: float = 0.1):
+        try:
+            # Press the button
+            self.tap(button)
+            await asyncio.sleep(duration)
+        except asyncio.CancelledError:
+            # Handle cancellation if needed
+            self.release(button)
+        finally:
+            self.release(button)  # Ensure the button is released at the end
+
+    async def hold_buttons(self, buttons: List[kb.KeyCode], duration: float = 0.5):
+        try:
+            with self.pressed(*buttons):
+                await asyncio.sleep(duration)
+        except asyncio.CancelledError:
+            # Handle cancellation if needed
+            for button in buttons:
+                self.release(button)
+        finally:
+            # Ensure the buttons are released at the end
+            for button in buttons:
+                self.release(button)  
