@@ -1,10 +1,12 @@
+import asyncio
+
 from asyncio import Event, Queue
 from collections import deque
 from threading import Lock
+from inference.yolo_object_detector import YoloObjectDetector
+from utilities import config
 
-# TODO: Split file into package
-
-import asyncio
+# TODO: Split file into package. Each class requires it's own file.
 
 class SharedObject:
     """
@@ -60,8 +62,7 @@ class ThreadSafeDeque:
 # Resources shared across all tasks.
 class SharedProgramData:
     """
-    A singleton class that holds shared program data.
-    This data is accessible across threads safely.
+    A multiprocessing-safe singleton using CUDA preloading.
     """
     _instance = None
 
@@ -70,4 +71,19 @@ class SharedProgramData:
             cls._instance = super(SharedProgramData, cls).__new__(cls)
             cls._instance.latest_screenshot = Queue(maxsize=1)
             cls._instance.exit_event = Event()
+
+            # Initialize CUDA once in the main process
+            if torch.cuda.is_available():
+                print("[Main] Initializing CUDA once...")
+                torch.cuda.init()
+                torch.cuda.synchronize()
+
+            # Load YOLO model into CUDA memory only once
+            print("[Main] Loading YOLO model onto GPU...")
+            # TODO: Test and evaluate whether having the initialize code in here is necessary
+            cls._instance.rush_detection_model = YoloObjectDetector(config.HF_RUSH_DETECTION_PATH, config.HF_RUSH_DETECTION_FILENAME)
+            cls._instance.rush_detection_model.model.to("cuda")  # Load onto GPU
+            torch.cuda.synchronize()
+            print("[Main] YOLO model loaded and CUDA ready.")
+
         return cls._instance

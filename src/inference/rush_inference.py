@@ -1,12 +1,23 @@
+# Standard Library Imports
 import time
+import asyncio
+from multiprocessing import Queue
+
+# Additional Library Imports
 import requests
+import torch
+
+# Project-Specific Imports
 from controllers.game_strategy_controller import GameStrategyController
 from game_state.game_state import GameState
 from inference.inference_step import InferenceStep
 from inference.yolo_object_detector import YoloObjectDetector
 from utilities import config
 from utilities.image import ImageWrapper
+from utilities.shared_thread_resources import SharedProgramData
 
+
+# These methods were split from the class for easier import when running as a web service (notebooks/rush-detection-service.ipynb)
 def parse_rush_model_results(results):
     high_confidence = 0.35
 
@@ -38,6 +49,25 @@ def parse_rush_model_results(results):
             detections.append(detection)
         
     return detections
+
+def run_inference(image, queue: Queue):
+    """Worker function for running inference in a separate process."""
+    try:
+        shared_data = SharedProgramData()
+        detector = shared_data.rush_detection_model
+        detector.model.to("cuda")  # Ensure it's on GPU
+        torch.cuda.synchronize()
+
+        # Run async function inside a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        results = loop.run_until_complete(detector.detect_objects(image, parse_rush_model_results))
+
+        # Send results back
+        queue.put(results)
+
+    except Exception as e:
+        queue.put({'error': str(e)})
 
 class RushInference(InferenceStep):
     async def infer(self, image: ImageWrapper, game: GameStrategyController):
