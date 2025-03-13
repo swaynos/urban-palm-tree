@@ -83,8 +83,9 @@ class SharedProgramData:
             print("[Main] Loading YOLO model onto GPU...")
             # TODO: Test and evaluate whether having the initialize code in here is necessary
             cls._instance.rush_detection_model = YoloObjectDetector(config.HF_RUSH_DETECTION_PATH, config.HF_RUSH_DETECTION_FILENAME)
-            cls._instance.rush_detection_model.model.to("cuda")  # Load onto GPU
-            torch.cuda.synchronize()
-            print("[Main] YOLO model loaded and CUDA ready.")
+            if torch.cuda.is_available():
+                cls._instance.rush_detection_model.model.to("cuda")  # Load onto GPU
+                torch.cuda.synchronize()
+                print("[Main] YOLO model loaded and CUDA ready.")
 
         return cls._instance
