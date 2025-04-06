@@ -1,3 +1,4 @@
+import logging
 import random
 import time
 from controllers.game_strategy_controller import GameStrategyController
@@ -7,6 +8,7 @@ from utilities.playstation_io import PlaystationIO
 class GameFlowController():
     def __init__(self):
         self.io = PlaystationIO()
+        self.logger = logging.getLogger(__name__)
 
     async def build_actions_from_strategy(self, game_strategy: GameStrategyController):
         """
@@ -46,6 +48,9 @@ class GameFlowController():
     
     async def execute_actions(self, actions: list[Action]):
         for action in actions:
+            earliest_time = min(action.timestamps)
+            elapsed_time = time.time() - earliest_time
+            self.logger.debug(f"Executing action | elapsed time from image capture to action execution: {elapsed_time}")
             await action.apply_steps()
     
     def get_action_from_button(self, infer_timestamp: float, image_timestamp: float, button, duration: float = 0):

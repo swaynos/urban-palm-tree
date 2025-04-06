@@ -29,6 +29,10 @@ class Action:
 
     async def apply_steps(self):
         for step in self.steps:
+            #TODO: Determine if the current action is stale
+            # IDEA: look at the timestamp of the action and compare it to the latest image. If the image is newer
+            # Argument: Even though there is a new image, there might not yet be a new action that needs to be executed
+            # IDEA2: Keep it simple for now. Define in the configuration the maximum amount of time after an image is captured that an action can be executed
             if (step[1] > 0):
                 await self.execute_action_over_time(step[0], step[1])
             else:
