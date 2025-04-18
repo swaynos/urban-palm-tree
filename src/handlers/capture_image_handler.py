@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from dispatch import dispatch_async, dispatch_get_main_queue
 from concurrent.futures import Future
 from time import time
 
