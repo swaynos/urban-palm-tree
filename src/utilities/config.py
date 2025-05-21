@@ -16,6 +16,11 @@ APP_HEADER_HEIGHT = int(os.getenv("APP_HEADER_HEIGHT", 0))
 # TODO: Test this assumption on different hardware.
 APP_RESIZE_REQUIRED = os.getenv("APP_RESIZE_REQUIRED", "True").lower() == "true"
 
+# Flag - use a static image for testing
+CAPTURE_IMAGE_USE_STATIC_IMAGE = os.getenv("CAPTURE_IMAGE_USE_STATIC_IMAGE", "False").lower() == "true"
+# Path to the static image to use if CAPTURE_IMAGE_USE_STATIC_IMAGE is True
+CAPTURE_IMAGE_STATIC_IMAGE_PATH = os.getenv("CAPTURE_IMAGE_STATIC_IMAGE_PATH", "./screenshots/static/static_image.png")
+
 # Delay in seconds between loops of capture_image_handler. This allows the user to throttle
 # the window focus and image capturing rate.
 CAPTURE_IMAGE_THREAD_DELAY = int(os.getenv("CAPTURE_IMAGE_THREAD_DELAY", 1))

@@ -35,6 +35,13 @@ class ImageWrapper:
             raise ValueError("Unsupported image type: must be a PIL.Image.Image or a numpy.ndarray")
         self.saved_path = saved_path
 
+    @classmethod
+    def load_image_from_file(self, file_path: str):
+        """Load an image from a file and return an instance of ImageWrapper."""
+        # Open image using PIL
+        image = Image.open(file_path)
+        return self(image)  # Return an instance of ImageWrapper with PIL Image
+
     def resize(self, width, height):
         self._image = self._image.resize((width, height), Image.LANCZOS)
 
@@ -70,10 +77,17 @@ class ImageWrapper:
         return resized_img
 
     # Image manipulation
-    def to_bytes(self) -> bytes:
-        """Convert a PIL Image to a byte array."""
+    def to_bytes(self, image_format='JPEG', quality=85) -> bytes:
+        """Convert a PIL Image to a compressed byte array."""
         img_byte_arr = io.BytesIO()
-        self._image.save(img_byte_arr, format=image_format)  # Save the image to a bytes buffer
+        
+        # Convert to RGB if the image has an alpha channel
+        if self._image.mode == 'RGBA':
+            image_rgb = self._image.convert('RGB')
+        else:
+            image_rgb = self._image
+        
+        image_rgb.save(img_byte_arr, format=image_format, quality=quality)  # Save with compression
         img_byte_arr.seek(0)  # Seek to the beginning of the BytesIO buffer
         return img_byte_arr.getvalue()  # Return the byte array
     

@@ -76,7 +76,7 @@ class RushInference(InferenceStep):
         if config.RUSH_INFERENCE_USE_WEBSERVICE:
             # Send the image to the web service
             url = config.RUSH_INFERENCE_WEBSERVICE_URL
-            files = {'file': image.to_bytes()}
+            files = {'file': image.to_bytes(quality=85)}
             
             response = requests.post(url, files=files)
             after_timestamp = time.time()
