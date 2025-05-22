@@ -18,7 +18,7 @@ class GameStateInference(InferenceStep):
 
         game.game_state_tracker.set_game_state(game_status_response)
 
-        # TODO: I think as it stands today, the different levels of state are too complicated to manage. Refactoring is suggested.
+        # TODO: I think as it stands today, the different levels of state are too complicated to manage. Refactor.
         
         # if game_status_response == GameState.IN_MATCH:
         #     game.game_state_tracker.set_game_state(GameSystemState.IN_MATCH_OTHER)

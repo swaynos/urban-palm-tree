@@ -37,7 +37,11 @@ class ImageInferencePipeline:
     async def process_image(self, image: ImageWrapper):
         """Processes an image through the inference pipeline."""
         first_inference = RushInference()
-        first_inference.set_next(GameStateInference()).set_next(MenuStateInference()).set_next(SquadSelectionInference())
+        first_inference.set_next(GameStateInference())
+        # TODO: Similar to the todo in GameStateInference, the inference pipeline needs to be refactored. 
+        # The current approach is too slow and requires too many different models to be loaded. 
+        # Please see notes in IDEAS.md for more details on the new idea.
+        #first_inference.set_next(GameStateInference()).set_next(MenuStateInference()).set_next(SquadSelectionInference())
 
         await first_inference.execute(image, self.game)
         
