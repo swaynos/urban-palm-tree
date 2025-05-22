@@ -24,7 +24,8 @@ class ImageInferencePipeline:
                     image = await self.latest_screenshot_queue.get()
                     if image:
                         await self.process_image(image)
-                        inference_timestamp = self.game.set_inference_timestamp()
+                        await self.game.set_last_image(image)
+                        inference_timestamp = await self.game.update_inference_timestamp()
                         elapsed_time = image.compare_timestamp(inference_timestamp)
                         self.logger.debug(f"Time elapsed for image inference: {elapsed_time}")
                     else:

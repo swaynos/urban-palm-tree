@@ -41,7 +41,7 @@ class GameFlowController():
             #     [[game_controller.io.Cross],0])
         elif game_strategy.last_image is not None \
             and game_strategy.image_inference_timestamp is not None:
-            image_timestamp = game_strategy.last_image.timestamp
+            image_timestamp = game_strategy.last_image.get_timestamp()
             infer_timestamp = game_strategy.image_inference_timestamp
             actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0))
         
@@ -51,6 +51,6 @@ class GameFlowController():
         for action in actions:
             await action.apply_steps()
     
-    def get_action_from_button(self, infer_timestamp: float, image_timestamp: float, button, duration: float = 0):
+    def get_action_from_button(self, image_timestamp: float, infer_timestamp: float, button, duration: float = 0):
         press_button_steps = [([button], duration)]
         return Action(image_timestamp, infer_timestamp, self.io, press_button_steps)

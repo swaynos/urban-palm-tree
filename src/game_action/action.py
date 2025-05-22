@@ -45,7 +45,7 @@ class Action:
         for button in buttons:
             logger.info(f"Pressing button: {button}.")
             logger.debug(f"Time elapsed from screenshot: {self.get_time_elapsed_from_screenshot()}")
-            logger.debug(f"Time elapsed from inference: {self.time_elapsed_from_inference()}")
+            logger.debug(f"Time elapsed from inference: {self.get_time_elapsed_from_inference()}")
             await self.playstation_io.press_button(button)
         
     async def execute_action_over_time(self, buttons: List[kb.KeyCode], duration: float):

@@ -193,6 +193,9 @@ class ImageWrapper:
         timestamp_difference = timestamp - self._timestamp
         return timestamp_difference
 
+    def get_timestamp(self):
+        return self._timestamp
+
     async def async_save_image(self, path: str):
         """
         Asynchronously saves an image to a file.
