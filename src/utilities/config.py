@@ -49,6 +49,8 @@ WANDB_API_KEY= os.getenv('WANDB_API_KEY')
 HF_API_KEY= os.getenv('HF_API_KEY')
 HF_USERNAME = os.getenv('HF_USERNAME')
 
+# This will bypass input being sent to the controller for testing
+CONTROLLER_INPUT_BYPASS = os.getenv('CONTROLLER_INPUT_BYPASS', "False").lower() == "true"
 # This delay will throttle the controller handler thread if needed, and avoid overloading the system
 CONTROLLER_INPUT_THREAD_DELAY = int(os.getenv('CONTROLLER_INPUT_THREAD_DELAY', 0))
 
