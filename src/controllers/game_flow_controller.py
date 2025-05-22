@@ -15,12 +15,12 @@ class GameFlowController():
         # TODO: can game_strategy_controller return the actions directly? Using objects from game_strategy?
         actions = []
         
-        # TODO: Determine if I want to continue to use these timestamps, and provide actual values
-        image_timestamp = time.time()
-        infer_timestamp = time.time()
-
         is_in_match = await game_strategy.is_in_match()
         if is_in_match:
+            # These should not be empty if we are in a match
+            image_timestamp = game_strategy.last_image.timestamp
+            infer_timestamp = game_strategy.image_inference_timestamp
+            
             # Loop it 10 times to avoid waiting for long inference
             for i in range(10):
                 random_number = random.randint(1, 10)
@@ -39,7 +39,10 @@ class GameFlowController():
             #     [[game_controller.io.L2, game_controller.io.Lstick.Right],0.5])
             #     [[game_controller.io.L2, game_controller.io.Lstick.Down],0.5])
             #     [[game_controller.io.Cross],0])
-        else:
+        elif game_strategy.last_image is not None \
+            and game_strategy.image_inference_timestamp is not None:
+            image_timestamp = game_strategy.last_image.timestamp
+            infer_timestamp = game_strategy.image_inference_timestamp
             actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0))
         
         return actions
