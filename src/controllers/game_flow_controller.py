@@ -18,7 +18,7 @@ class GameFlowController():
         is_in_match = await game_strategy.is_in_match()
         if is_in_match:
             # These should not be empty if we are in a match
-            image_timestamp = game_strategy.last_image.timestamp
+            image_timestamp = game_strategy.last_image.get_timestamp()
             infer_timestamp = game_strategy.image_inference_timestamp
             
             # Loop it 10 times to avoid waiting for long inference

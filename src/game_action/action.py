@@ -56,7 +56,7 @@ class Action:
             logger.info(f"Pressing buttons for the following durations:")
             logger.info(f"{self.steps_to_string()}")
             logger.debug(f"Time elapsed from screenshot: {self.get_time_elapsed_from_screenshot()}")
-            logger.debug(f"Time elapsed from inference: {self.time_elapsed_from_inference()}")
+            logger.debug(f"Time elapsed from inference: {self.get_time_elapsed_from_inference()}")
             await self.playstation_io.hold_buttons(buttons, duration)
 
     async def steps_to_string(self):
