@@ -21,18 +21,18 @@ class GameFlowController():
             image_timestamp = game_strategy.last_image.get_timestamp()
             infer_timestamp = game_strategy.image_inference_timestamp
             
-            # Loop it 10 times to avoid waiting for long inference
-            for i in range(10):
-                random_number = random.randint(1, 10)
-                # Select nearest and pass
-                if random_number > 1:
-                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.L1, 0))
-                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0.05))
-                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 1))
-                # Shoot it
-                else:
-                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Moon, 0.05))
-            # Spin in circles, then pass
+            # TODO: This is a placeholder for the actual strategy, to simulate different behaviors that can outcome
+            random_number = random.randint(1, 10)
+            # Select nearest and pass
+            if random_number > 1:
+                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.L1, 0))
+                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0.05))
+                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 1))
+            # Shoot it
+            else:
+                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Moon, 0.05))
+            
+            # Idea: Spin in circles, then pass
             # else:
             #     [game_controller.io.L2, game_controller.io.Lstick.Left],0.5])
             #     [[game_controller.io.L2, game_controller.io.Lstick.Up],0.5])
