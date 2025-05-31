@@ -6,6 +6,7 @@ from inference.game_state_inference import GameStateInference
 from inference.menu_state_inference import MenuStateInference
 from inference.rush_inference import RushInference
 from inference.squad_selection_inference import SquadSelectionInference
+from utilities import config
 from utilities.image import ImageWrapper
 
 class ImageInferencePipeline:
@@ -17,7 +18,8 @@ class ImageInferencePipeline:
 
     async def start(self):
         """Starts the inference pipeline."""
-
+        
+        # TODO: Consider moving this loop out into infer_image_handler so that it matches the pattern
         while not self.stop_event.is_set():
             try:
                 if not self.latest_screenshot_queue.empty():
@@ -34,7 +36,7 @@ class ImageInferencePipeline:
             except Exception as e:
                 self.logger.error(f"Inference pipeline error: {e}")
             
-            await asyncio.sleep(0)  # Yield control back to the event loop
+            await asyncio.sleep(config.INFERENCE_THREAD_DELAY_SECONDS)  # Yield control back to the event loop
 
     async def process_image(self, image: ImageWrapper):
         """Processes an image through the inference pipeline."""

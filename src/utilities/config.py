@@ -23,7 +23,7 @@ CAPTURE_IMAGE_STATIC_IMAGE_PATH = os.getenv("CAPTURE_IMAGE_STATIC_IMAGE_PATH", "
 
 # Delay in seconds between loops of capture_image_handler. This allows the user to throttle
 # the window focus and image capturing rate.
-CAPTURE_IMAGE_THREAD_DELAY = int(os.getenv("CAPTURE_IMAGE_THREAD_DELAY", 1))
+CAPTURE_IMAGE_THREAD_DELAY_SECONDS = float(os.getenv("CAPTURE_IMAGE_THREAD_DELAY_SECONDS", 0))
 
 # Flag - will screenshots be saved
 SAVE_SCREENSHOTS = os.getenv("SAVE_SCREENSHOTS", "True").lower() == "true"
@@ -52,7 +52,9 @@ HF_USERNAME = os.getenv('HF_USERNAME')
 # This will bypass input being sent to the controller for testing
 CONTROLLER_INPUT_BYPASS = os.getenv('CONTROLLER_INPUT_BYPASS', "False").lower() == "true"
 # This delay will throttle the controller handler thread if needed, and avoid overloading the system
-CONTROLLER_INPUT_THREAD_DELAY = int(os.getenv('CONTROLLER_INPUT_THREAD_DELAY', 0))
+CONTROLLER_INPUT_THREAD_DELAY_SECONDS = float(os.getenv('CONTROLLER_INPUT_THREAD_DELAY_SECONDS', 0))
+
+INFERENCE_THREAD_DELAY_SECONDS = float(os.getenv('INFERENCE_THREAD_DELAY_SECONDS', 0))
 
 # FC25 - Rush YOLO Model
 HF_RUSH_DETECTION_PATH =  os.getenv('HF_RUSH_DETECTION_PATH', "fc25-rush_model")
