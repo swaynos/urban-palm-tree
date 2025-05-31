@@ -23,11 +23,11 @@ class GameFlowController():
             
             # TODO: This is a placeholder for the actual strategy, to simulate different behaviors that can outcome
             random_number = random.randint(1, 10)
-            # Select nearest and pass
+            
+            # Select nearest (L1) and hold X for 300ms
             if random_number > 1:
                 actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.L1, 0))
-                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0.05))
-                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 1))
+                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0.3))
             # Shoot it
             else:
                 actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Moon, 0.05))
