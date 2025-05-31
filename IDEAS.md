@@ -59,3 +59,37 @@ To detect a “fallout” (i.e., user no longer in a match):
   - GPT-4 is provided with current visual state and a high-level user goal (e.g., "Handle injured player" or "Claim Squad Battles rewards").
   - The model acts as a turn-based planner, suggesting the next UI step or action.
   - System takes action → re-evaluates visual state → GPT-4 refines goal or next step.
+
+---
+
+## 4. Threaded Execution Architecture
+There is a delay that exists between when the screenshot is captured to when actions are executed. It is believed that this delay is due to a bug. However, if the bug is architecture related, we could re-architect the thread execution to minimize this delay.
+
+Existing Architecture | Threads:
+Thread 1. Capture Screenshots - Will loop and capture screenshots as fast as possible. There is a configurable delay between each loop.
+Thread 2. Inference Images - Loops and runs inference on the latest screenshot. There is a configurable delay between each loop.
+Thread 3. Execute Actions - Loops and builds actions based on the strategy built in GameStrategyController.  There is a configurable delay between each loop.
+
+GameStrategyController is shared between the Inference and Execute Actions threads.
+
+The aspiration is that the Execute Actions thread will execute as soon as inference is completed.
+
+*Existing Performance*
+| Action                       | Time Elapsed (seconds)  |
+|------------------------------|-------------------------|
+| Time elapsed from screenshot:| 0.6129|
+| Time elapsed from screenshot:| 2.3702|
+| Time elapsed from screenshot:| 4.0333|
+| Time elapsed from screenshot:| 0.5419|
+| Time elapsed from screenshot:| 2.2480|
+| Time elapsed from screenshot:| 4.0895|
+| Time elapsed from screenshot:| 0.5110|
+| Time elapsed from screenshot:| 2.0662|
+| Time elapsed from screenshot:| 3.6719|
+| Time elapsed from screenshot:| 0.5006|
+| Time elapsed from screenshot:| 2.1289|
+| Time elapsed from screenshot:| 3.7140|
+| Time elapsed from screenshot:| 0.5033|
+| Time elapsed from screenshot:| 2.2351|
+| Time elapsed from screenshot:| 4.0609|
+| Time elapsed from screenshot:| 0.5243|
