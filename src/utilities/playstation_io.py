@@ -114,6 +114,7 @@ class PlaystationIO(kb.Controller):
             self.release(button)  # Ensure the button is released at the end
 
     async def hold_buttons(self, buttons: List[kb.KeyCode], duration: float = 0.5):
+        # When testing, it is preferred to bypass the controller input and instead simulate the delay
         if config.CONTROLLER_INPUT_BYPASS:
             await asyncio.sleep(duration)
             return
