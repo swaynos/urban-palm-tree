@@ -63,16 +63,61 @@ To detect a “fallout” (i.e., user no longer in a match):
 ---
 
 ## 4. Threaded Execution Architecture
-There is a delay that exists between when the screenshot is captured to when actions are executed. It is believed that this delay is due to a bug. However, if the bug is architecture related, we could re-architect the thread execution to minimize this delay.
+# Reducing Delay Between Screenshot Capture and Action Execution
 
-Existing Architecture | Threads:
-Thread 1. Capture Screenshots - Will loop and capture screenshots as fast as possible. There is a configurable delay between each loop.
-Thread 2. Inference Images - Loops and runs inference on the latest screenshot. There is a configurable delay between each loop.
-Thread 3. Execute Actions - Loops and builds actions based on the strategy built in GameStrategyController.  There is a configurable delay between each loop.
+There is currently a delay between when a screenshot is captured and when actions are executed. This delay is suspected to be caused by a bug, but it may also be due to architectural issues. If it is architecture-related, re-architecting thread execution may help minimize the delay. However, optimizing this may be challenging if the underlying design is flawed.
 
-GameStrategyController is shared between the Inference and Execute Actions threads.
+---
 
-The aspiration is that the Execute Actions thread will execute as soon as inference is completed.
+## Existing Architecture (Threads)
+
+- **Thread 1: Capture Screenshots**
+    - Continuously loops to capture screenshots as quickly as possible.
+    - Has a configurable delay between each loop.
+
+- **Thread 2: Inference Images**
+    - Loops and runs inference on the latest screenshot.
+    - Has a configurable delay between each loop.
+
+- **Thread 3: Execute Actions**
+    - Loops and builds actions based on the strategy in `GameStrategyController`.
+    - Has a configurable delay between each loop.
+
+> `GameStrategyController` is shared between the Inference and Execute Actions threads.
+>
+> The aspiration is for the Execute Actions thread to execute as soon as inference is completed, but delays are currently preventing this.
+
+---
+
+## Proposed Architecture (Threads)
+
+- **Thread 1: Capture Screenshots**
+    - Loops and captures screenshots as quickly as possible, outputting each screenshot to a single-dimension queue.
+    - Configurable delay between each loop, which could be optimized automatically.
+
+- **Thread 2: Inference Images**
+    - Long-polls the queue for new screenshots.
+    - Runs inference only when a new screenshot is available, outputting inference results to a separate single-dimension queue.
+    - No delay is needed between loops, as processing is triggered by the arrival of new screenshots.
+    - _Optional:_ Consider using a more efficient event mechanism in Python to react to new screenshots, rather than polling.
+
+- **Thread 3: Execute Actions**
+    - Long-polls the queue for new inference results.
+    - Executes actions as soon as new inference results are available.
+    - No delay is needed between loops, as processing is triggered by the arrival of new inference results.
+    - _Optional:_ Explore better event mechanisms in Python to react to new inference results, instead of polling.
+
+---
+
+## Goals and Open Questions
+
+- **Goal:**  
+    - Minimize the delay between inference completion and action execution.
+
+- **Open Questions:**  
+    - Can Python’s event-driven primitives (such as `queue.Queue` with blocking `get()`, `threading.Event`, or async libraries) improve responsiveness?
+    - Are there recommended patterns or libraries for real-time, event-driven thread communication in Python?
+
 
 *Existing Performance*
 | Action                       | Time Elapsed (seconds)  |
