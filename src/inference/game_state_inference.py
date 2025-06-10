@@ -16,12 +16,16 @@ class GameStateInference(InferenceStep):
         )
         game_status_response, _ = await game_status_image_classifier.classify_image(image)
 
-        if game_status_response == GameState.IN_MATCH:
-            game.game_state.update_data(GameSystemState.IN_MATCH_OTHER)
-        elif game_status_response == GameState.IN_MENU:
-            game.game_state.update_data(GameSystemState.IN_MENU_OTHER)
-        else:
-            self.logger.warning(f"Unknown game state detected: {game_status_response}")
-            game.game_state.update_data(GameSystemState.UNKNOWN)
+        game.game_state_tracker.set_game_state(game_status_response)
+
+        # TODO: I think as it stands today, the different levels of state are too complicated to manage. Refactor.
+        
+        # if game_status_response == GameState.IN_MATCH:
+        #     game.game_state_tracker.set_game_state(GameSystemState.IN_MATCH_OTHER)
+        # elif game_status_response == GameState.IN_MENU:
+        #     game.game_state_tracker.update_data(GameSystemState.IN_MENU_OTHER)
+        # else:
+        #     self.logger.warning(f"Unknown game state detected: {game_status_response}")
+        #     game.game_state_tracker.update_data(GameSystemState.UNKNOWN)
 
         # From here the pipeline can be modified based on the game state. See notes in Readme.md

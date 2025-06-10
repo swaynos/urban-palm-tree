@@ -1,11 +1,12 @@
-from pynput import keyboard as kb
-
-import asyncio
+import logging
 import time
-
 from typing import List
 
+from pynput import keyboard as kb
+
 from utilities.playstation_io import PlaystationIO
+
+logger = logging.getLogger(__name__)
 
 class Action:
     """
@@ -27,6 +28,12 @@ class Action:
         self.playstation_io = playstation_io
         self.timestamps = [image_timestamp, infer_timestamp]
 
+    def get_time_elapsed_from_screenshot(self):
+        return time.time() - self.timestamps[0]
+    
+    def get_time_elapsed_from_inference(self):
+        return time.time() - self.timestamps[1]
+
     async def apply_steps(self):
         for step in self.steps:
             #TODO: Determine if the current action is stale
@@ -40,15 +47,24 @@ class Action:
 
     async def execute_action(self, buttons: List[kb.KeyCode]):
         for button in buttons:
+            logger.info(f"{await self.steps_to_string()}")
+            logger.debug(f"Action: Time elapsed from screenshot: {self.get_time_elapsed_from_screenshot()}")
+            logger.debug(f"Action: Time elapsed from inference: {self.get_time_elapsed_from_inference()}")
             await self.playstation_io.press_button(button)
         
     async def execute_action_over_time(self, buttons: List[kb.KeyCode], duration: float):
         end_time = time.time() + duration
-        while time.time() < end_time: #TODO: I think we should remove this extra loop
+        while time.time() < end_time:
+            # TODO: There is a bug on macOS where these buttons get stuck within the running application.
+            # Even after termination of this runtime, the buttons remain stuck.
+            logger.info(f"{await self.steps_to_string()}")
+            logger.debug(f"Action: Time elapsed from screenshot: {self.get_time_elapsed_from_screenshot()}")
+            logger.debug(f"Action: Time elapsed from inference: {self.get_time_elapsed_from_inference()}")
             await self.playstation_io.hold_buttons(buttons, duration)
 
     async def steps_to_string(self):
         return_str = ""
         for step in self.steps:
-            return_str += f"{step[0]} for {step[1]} seconds. "
+            keys = ', '.join([key.char if hasattr(key, 'char') else str(key) for key in step[0]])
+            return_str += f"Pressing keys: {keys} for {step[1]} seconds. "
         return return_str

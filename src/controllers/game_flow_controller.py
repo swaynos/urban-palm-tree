@@ -17,31 +17,34 @@ class GameFlowController():
         # TODO: can game_strategy_controller return the actions directly? Using objects from game_strategy?
         actions = []
         
-        # TODO: Determine if I want to continue to use these timestamps, and provide actual values
-        image_timestamp = time.time()
-        infer_timestamp = time.time()
-
         is_in_match = await game_strategy.is_in_match()
         if is_in_match:
-            # Loop it 10 times to avoid waiting for long inference
-            for i in range(10):
-                random_number = random.randint(1, 10)
-                # Select nearest and pass
-                if random_number > 1:
-                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.L1, 0))
-                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0.05))
-                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 1))
-                # Shoot it
-                else:
-                    actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Moon, 0.05))
-            # Spin in circles, then pass
+            # These should not be empty if we are in a match
+            image_timestamp = game_strategy.last_image.get_timestamp()
+            infer_timestamp = game_strategy.image_inference_timestamp
+            
+            # TODO: This is a placeholder for the actual strategy, to simulate different behaviors that can outcome
+            random_number = random.randint(1, 10)
+            
+            # Select nearest (L1) and hold X for 300ms
+            if random_number > 1:
+                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.L1, 0))
+                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0.3))
+            # Shoot it
+            else:
+                actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Moon, 0.05))
+            
+            # Idea: Spin in circles, then pass
             # else:
             #     [game_controller.io.L2, game_controller.io.Lstick.Left],0.5])
             #     [[game_controller.io.L2, game_controller.io.Lstick.Up],0.5])
             #     [[game_controller.io.L2, game_controller.io.Lstick.Right],0.5])
             #     [[game_controller.io.L2, game_controller.io.Lstick.Down],0.5])
             #     [[game_controller.io.Cross],0])
-        else:
+        elif game_strategy.last_image is not None \
+            and game_strategy.image_inference_timestamp is not None:
+            image_timestamp = game_strategy.last_image.get_timestamp()
+            infer_timestamp = game_strategy.image_inference_timestamp
             actions.append(self.get_action_from_button(image_timestamp, infer_timestamp, self.io.Cross, 0))
         
         return actions
@@ -53,6 +56,6 @@ class GameFlowController():
             self.logger.debug(f"Executing action | elapsed time from image capture to action execution: {elapsed_time}")
             await action.apply_steps()
     
-    def get_action_from_button(self, infer_timestamp: float, image_timestamp: float, button, duration: float = 0):
+    def get_action_from_button(self, image_timestamp: float, infer_timestamp: float, button, duration: float = 0):
         press_button_steps = [([button], duration)]
         return Action(image_timestamp, infer_timestamp, self.io, press_button_steps)

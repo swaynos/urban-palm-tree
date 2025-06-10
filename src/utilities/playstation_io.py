@@ -2,6 +2,7 @@ import asyncio
 import time
 from typing import List
 from pynput import keyboard as kb
+from utilities import config
 
 """
 Valid Keys
@@ -98,6 +99,10 @@ class PlaystationIO(kb.Controller):
         self.release_joystick_direction(self.Rstick)
 
     async def press_button(self, button: kb.KeyCode, duration: float = 0.1):
+        if config.CONTROLLER_INPUT_BYPASS:
+            await asyncio.sleep(duration)
+            return
+        
         try:
             # Press the button
             self.tap(button)
@@ -109,6 +114,11 @@ class PlaystationIO(kb.Controller):
             self.release(button)  # Ensure the button is released at the end
 
     async def hold_buttons(self, buttons: List[kb.KeyCode], duration: float = 0.5):
+        # When testing, it is preferred to bypass the controller input and instead simulate the delay
+        if config.CONTROLLER_INPUT_BYPASS:
+            await asyncio.sleep(duration)
+            return
+         
         try:
             with self.pressed(*buttons):
                 await asyncio.sleep(duration)

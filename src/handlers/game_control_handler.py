@@ -30,9 +30,11 @@ async def controller_input_handler(app: RunningApplication, game_flow: GameFlowC
         logger.debug(f"controller_input_handler has looped {controller_input_thread_statistics.count} times. Elapsed time is {controller_input_thread_statistics.get_time()}")
         controller_input_thread_statistics.count += 1
         try:
+            # TODO: In the event that there are many long-running actions, there should be a mechanism to 
+            # cancel the actions if they become too stale.
             actions = await game_flow.build_actions_from_strategy(game_strategy)  
             await game_flow.execute_actions(actions)
                 
-            await asyncio.sleep(config.CONTROLLER_INPUT_THREAD_DELAY)  # Yield control back to the event loop
+            await asyncio.sleep(config.CONTROLLER_INPUT_THREAD_DELAY_SECONDS)  # Yield control back to the event loop
         except Exception as argument:
             logger.error(argument)
