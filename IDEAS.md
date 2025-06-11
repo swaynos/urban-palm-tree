@@ -17,7 +17,7 @@ Instead of using MLLMs here (which would be too slow), this phase relies on a tw
 - ball: (x3, y3, x4, y4)
 - These detections form a **real-time, lightweight representation of the game state**.
 ##### Stage 2: Tactical Inference Model
-- Feed the YOLO outputs into a **secondary model** (rule-based, shallow ML, or tiny neural net).secondary model (rule-based, shallow ML, or tiny neural net).
+- Feed the YOLO outputs into a **secondary model** (rule-based, shallow ML, or tiny neural net).
 - This model maps simplified game state => action, such as:
 ```
 INPUT:
