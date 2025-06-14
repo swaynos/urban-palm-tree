@@ -1,6 +1,9 @@
 import datetime
 import logging
 
+# Note: The pynput library supports capturing keyboard and mouse events only.
+# To capture gamepad inputs, you'll need to remap controller buttons to keyboard inputs
+# using external tools or software.
 from pynput import keyboard, mouse
 
 # Create a separate logger for keyboard and mouse events

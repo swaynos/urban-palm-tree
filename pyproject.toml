@@ -29,6 +29,7 @@ torch = "^2.0.0"
 ultralytics = "^8.3.50"
 numpy = "^1.23"
 dotenv = "^0.9.9"
+httpx = "^0.28.1"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"

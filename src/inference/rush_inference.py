@@ -4,7 +4,7 @@ import asyncio
 from multiprocessing import Queue
 
 # Additional Library Imports
-import requests
+import httpx 
 import torch
 
 # Project-Specific Imports
@@ -74,31 +74,31 @@ class RushInference(InferenceStep):
         before_timestamp = time.time()
         self.logger.debug(f"Rush inference start. Image is {image.compare_timestamp(before_timestamp)} seconds stale.")
         if config.RUSH_INFERENCE_USE_WEBSERVICE:
-            # Send the image to the web service
+            # Send the image to the web service asynchronously
             url = config.RUSH_INFERENCE_WEBSERVICE_URL
             files = {'file': image.to_bytes(quality=85)}
-            
-            response = requests.post(url, files=files)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, files=files)
             after_timestamp = time.time()
 
-            self.logger.debug(f"Rush inference(service) took: {after_timestamp-before_timestamp} seconds")
+            self.logger.debug(f"Rush inference(service) took: {after_timestamp - before_timestamp} seconds")
 
             if response.status_code == 200:
                 yolo_detection_results = response.json()  # Return the response from the web service
             else:
                 raise Exception(f"Web service error: {response.status_code}, {response.text}")
-        else:   
-            # Local inference     
+        else:
+            # Local inference
             yolo_detector = YoloObjectDetector(config.HF_RUSH_DETECTION_PATH, config.HF_RUSH_DETECTION_FILENAME)
-            yolo_detection_results = await yolo_detector.detect_objects(image._image, parse_results_delegate=parse_rush_model_results)
-        
+            yolo_detection_results = await yolo_detector.detect_objects(
+                image._image,
+                parse_results_delegate=parse_rush_model_results
+            )
+
         self.logger.debug(f"Rush inference detection results: {yolo_detection_results}")
 
-        # If there are inference results, we are in a game. 
-        # A successful run of this model should have detections
+        # If there are inference results, we are in a game.
         if len(yolo_detection_results) > 0:
             game.game_state_tracker.set_game_state(GameState.IN_MATCH)
-
             # Stop linked inference steps
             self.next_step = None
-            

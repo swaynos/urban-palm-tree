@@ -1,11 +1,18 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "Debug start.py",
-        "type": "debugpy",
-        "request": "launch",
-        "program": "${workspaceFolder}/src/start.py",
-      }
-    ]
-  }
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/start.py",
+    },
+    {
+      "name": "Capture",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/capture.py",
+      "console": "integratedTerminal"
+    }
+  ]
+}
