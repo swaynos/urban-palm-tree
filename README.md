@@ -1,57 +1,72 @@
 # urban-palm-tree
-Automate gameplay on your PS5 by capturing the stream, analyzing frames, and making decisions based on game elements. This project leverages existing software to stream the PS5 feed to your computer and capture keyboard input to send back to the console.
 
-## Table of Contents
-- Installation
-- Usage
-- Contributing
-- License
+`urban-palm-tree` is an EA FC automation and research project that captures gameplay frames, infers game state, and issues controller actions.
 
-## Installation
+The long-term direction is documented in `PROJECT.md`: move from frame perception to a structured tactical state, then to higher-level action selection and controller sequencing.
+
+## Project Scope
+
+- Current codebase: runtime frame capture, inference pipelines, game-state tracking, and controller/action orchestration.
+- Long-term plan: `images -> structured state -> tactical intent -> controller commands`.
+- Primary planning source: `PROJECT.md` (dataset strategy, schema direction, and phased milestones).
+
+## Repository Layout
+
+- `PROJECT.md` - project plan, milestones, schema direction, and model roadmap.
+- `src/` - main application code.
+  - `src/start.py` - async runtime entrypoint.
+  - `src/inference/` - image and game-state inference steps.
+  - `src/controllers/` - game flow and strategy controllers.
+  - `src/handlers/` - capture, inference, and control loop handlers.
+  - `src/game_state/` - game-state models and trackers.
+  - `src/game_action/` - action definitions.
+  - `src/utilities/` - platform, IO, config, and helper utilities.
+- `tests/` - unit tests.
+- `notebooks/` - training and data preparation experiments.
+
+## Getting Started
+
+Note: the project currently uses Poetry for dependency management and run commands. I plan to migrate away from Poetry in a future update; until that change lands, use the Poetry commands below.
+
 1. Clone the repository:
-    ```bash
-    git clone git@github.com:swaynos/urban-palm-tree.git
-    ```
 
-2. Install Python dependencies using Poetry:
-    ```bash
-    poetry install
-    ```
-
-## Usage
-- Run the project using the following command:
-    ```bash
-    poetry run python main.py
-    ```
-
-## Contributing
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature-name`.
-3. Make your changes.
-4. Push your branch: `git push origin feature-name`.
-5. Create a pull request.
-
-## TODO
-- [ ] Complete a fuller set of player actions that the bot can perform. 
-- [ ] Move all inferencing to be optional service operations
-- [X] Create a notebook to run yolo_object_detector.py as a service (colab, or Jupyter on a local subnet)
-- [X] Optimize the inference time. The time between when the screenshot is captured to when an action is performed.
-- [ ] Build another model that will take the output of the Rush model and determine the best action to perform? Is there a way to chain model calls to avoid multiple round trips to a service?
-- [ ] Fix tests
-
-## Notes
- - InferenceSteps modify their chain at the end of the infer() step.
- ```
-    # From here the pipeline can be modified based on the game state
-    # old_next_step = self.next_step
-    # new_next_step = NewInferenceStep()
-    # new_next_step.set_next(old_next_step)
-    # self.set_next(new_next_step)
+```bash
+git clone git@github.com:swaynos/urban-palm-tree.git
+cd urban-palm-tree
 ```
 
-## License
-This project is licensed under the GNU General Public License v3.0
+2. Install dependencies (Python 3.10 required):
 
-## Project Goals
-1. While playing Rush in FC25, keep the player active by performing actions on behalf of the user.
-2. Introduce reinforcement learning to optimize the actions performed by the bot.
+```bash
+poetry install
+```
+
+3. Run the app runtime:
+
+```bash
+poetry run python src/start.py
+```
+
+4. Run tests:
+
+```bash
+poetry run pytest
+```
+
+## Contributor Guide
+
+- Read `PROJECT.md` first to align contributions with the roadmap.
+- Prefer focused pull requests tied to one phase or milestone.
+- Add or update tests for behavior changes when practical.
+- If you add new inference outputs, keep naming and structure consistent with existing game-state and inference modules.
+
+Good first contribution areas:
+
+- Inference pipeline quality and robustness improvements.
+- Test coverage fixes and reliability updates.
+- Dataset conversion and tooling that aligns with `PROJECT.md` phase priorities.
+- Platform/runtime ergonomics in capture and control handlers.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0.
