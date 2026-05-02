@@ -48,3 +48,13 @@
 - Model build-out proceeded using available datasets and completed successfully for all planned first-pass proxy/teacher runs.
 - Detailed command history and outcomes are tracked in:
   - `/home/bendy/Git/urban-palm-tree/progress.txt`
+
+## Screenshot Policy (Agreed)
+
+- `./screenshots/` is raw gameplay data and should be treated as an inference/evaluation target early on.
+- Early-stage training should prioritize labeled public datasets (Kaggle/Roboflow) to establish stronger base models.
+- The correct sequence is:
+  - train on labeled public datasets,
+  - validate on held-out public data,
+  - run inference on `./screenshots/` samples to measure transfer quality.
+- Direct early training on raw `./screenshots/` is considered a strategy mistake and should be avoided until baseline transfer performance is acceptable.
