@@ -34,7 +34,10 @@ async def controller_input_handler(app: RunningApplication, game_flow: GameFlowC
             # cancel the actions if they become too stale.
             actions = await game_flow.build_actions_from_strategy(game_strategy)  
             await game_flow.execute_actions(actions)
-                
-            await asyncio.sleep(config.CONTROLLER_INPUT_THREAD_DELAY_SECONDS)  # Yield control back to the event loop
+
+            # Wait for the next inference to complete
+            await shared_data.inference_completed_event.wait()
+            # Clear the event so we can wait for the next one
+            shared_data.inference_completed_event.clear()
         except Exception as argument:
             logger.error(argument)

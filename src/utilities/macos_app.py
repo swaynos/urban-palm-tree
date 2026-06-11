@@ -50,17 +50,15 @@ class RunningApplication():
             if window['kCGWindowLayer'] == 0:
                 return window['kCGWindowOwnerName']
             
-    def __init__(self):
+    def __init__(self, app_name):
          self.app: NSRunningApplication = None
-         self.app_name = None
+         self.app_name = app_name
          self.pid = None
          self.window = None
-    
-    def warm_up(self, app_name):
-        self.app_name = app_name
-        self.find_app(app_name)
-        self.activate_app()
-        self.get_window()
+
+         self.find_app(app_name)
+         self.activate_app()
+         self.get_window()
 
     def activate(self):
         self.activate_app()

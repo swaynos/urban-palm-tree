@@ -1,5 +1,26 @@
 # SPEC.md — First Buildout (Notebook-First Data + Transfer Learning Pipeline)
 
+## Development Environment & Poetry Migration
+
+### Current State
+This project is paused. It currently uses Poetry via `pyproject.toml` and `poetry.lock`, with a large ML-heavy Poetry-managed virtualenv cached outside the repository.
+
+### Resume Direction
+When work resumes, migrate the project away from Poetry and use a raw Python `venv` plus `pip` workflow instead.
+
+### Migration Requirements
+- Preserve the dependency intent from `pyproject.toml` and `poetry.lock` before removing Poetry-specific configuration.
+- Create a local virtual environment with Python `>=3.10,<3.11` unless the runtime target is deliberately changed.
+- Replace Poetry install/run instructions with direct `python -m venv`, `python -m pip install`, and plain Python command usage.
+- Prefer a `requirements.txt` or split `requirements*.txt` files if pinned dependencies are still needed.
+- Review heavy ML dependencies such as TensorFlow, Torch, Ultralytics, OpenCV, and related scientific packages before reinstalling them.
+- Do not recreate or depend on Poetry-managed virtualenvs under `~/Library/Caches/pypoetry`.
+
+### Cleanup Note
+The old Poetry cache and virtualenv are disposable and may be deleted. They should be recreated only through the new `venv` + `pip` workflow.
+
+---
+
 ## Problem Statement
 
 The project has a large local corpus of EA FC gameplay screenshots (`screenshots/`) and a set of public labeled datasets (`DATA.md`), but no first-buildout execution contract for producing a high-accuracy, reusable combined recordset.

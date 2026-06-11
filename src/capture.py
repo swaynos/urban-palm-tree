@@ -1,4 +1,5 @@
 import asyncio
+import utilities.config as config
 
 from handlers.capture_image_handler import capture_image_handler
 from utilities.input_capture import on_press, on_release, on_click
@@ -9,7 +10,7 @@ from utilities.shared_thread_resources import SharedProgramData
 shared_data = SharedProgramData()
 
 # Start application
-app = RunningApplication()
+app = RunningApplication(config.APP_NAME)
 
 async def main():
     await capture_image_handler(app, shared_data)

@@ -71,6 +71,7 @@ class SharedProgramData:
         if cls._instance is None:
             cls._instance = super(SharedProgramData, cls).__new__(cls)
             cls._instance.latest_screenshot = Queue(maxsize=1)
+            cls._instance.inference_completed_event = Event()
             cls._instance.exit_event = Event()
 
             # Initialize CUDA once in the main process

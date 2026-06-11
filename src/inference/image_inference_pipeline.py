@@ -10,10 +10,11 @@ from utilities import config
 from utilities.image import ImageWrapper
 
 class ImageInferencePipeline:
-    def __init__(self, game: GameStrategyController, latest_screenshot_queue: asyncio.Queue, stop_event: asyncio.Event):
+    def __init__(self, game: GameStrategyController, shared_data: 'SharedProgramData'):
         self.game = game
-        self.latest_screenshot_queue = latest_screenshot_queue
-        self.stop_event = stop_event
+        self.latest_screenshot_queue = shared_data.latest_screenshot
+        self.stop_event = shared_data.exit_event
+        self.shared_data = shared_data
         self.logger = logging.getLogger(__name__)
 
     async def start(self):
@@ -22,21 +23,22 @@ class ImageInferencePipeline:
         # TODO: Consider moving this loop out into infer_image_handler so that it matches the pattern
         while not self.stop_event.is_set():
             try:
-                if not self.latest_screenshot_queue.empty():
-                    image = await self.latest_screenshot_queue.get()
-                    if image:
-                        await self.process_image(image)
-                        await self.game.set_last_image(image)
-                        inference_timestamp = await self.game.update_inference_timestamp()
-                        elapsed_time = image.compare_timestamp(inference_timestamp)
-                        self.logger.debug(f"Time elapsed for image inference: {elapsed_time}")
-                    else:
-                        self.logger.warning("No image available for inference.")
-                        await asyncio.sleep(1)
+                # This will block until an image is available
+                image = await self.latest_screenshot_queue.get()
+                if image:
+                    await self.process_image(image)
+                    await self.game.set_last_image(image)
+                    inference_timestamp = await self.game.update_inference_timestamp()
+                    # Signal that inference is complete
+                    self.shared_data.inference_completed_event.set()
+                    elapsed_time = image.compare_timestamp(inference_timestamp)
+                    self.logger.debug(f"Time elapsed for image inference: {elapsed_time}")
+                else:
+                    self.logger.warning("No image available for inference.")
+                    # If we somehow get a None image, sleep briefly to prevent a tight loop
+                    await asyncio.sleep(0.1)
             except Exception as e:
                 self.logger.error(f"Inference pipeline error: {e}")
-            
-            await asyncio.sleep(config.INFERENCE_THREAD_DELAY_SECONDS)  # Yield control back to the event loop
 
     async def process_image(self, image: ImageWrapper):
         """Processes an image through the inference pipeline."""

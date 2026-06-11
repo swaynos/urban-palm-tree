@@ -100,5 +100,9 @@ class RushInference(InferenceStep):
         # If there are inference results, we are in a game.
         if len(yolo_detection_results) > 0:
             game.game_state_tracker.set_game_state(GameState.IN_MATCH)
+            
+            # Update the strategy with the new detections
+            await game.update_strategy(yolo_detection_results, image._image.width)
+            
             # Stop linked inference steps
             self.next_step = None

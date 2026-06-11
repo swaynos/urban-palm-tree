@@ -23,8 +23,7 @@ logging.basicConfig(level=config.LOG_LEVEL, format='%(asctime)s - %(levelname)s 
 shared_data = SharedProgramData()
 
 # Begin Program
-app = RunningApplication()
-app.warm_up(config.APP_NAME)
+app = RunningApplication(config.APP_NAME)
 game_flow = GameFlowController() 
 game_strategy = GameStrategyController()
 

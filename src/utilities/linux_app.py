@@ -8,13 +8,11 @@ from Xlib.protocol.event import ClientMessage
 from Xlib.protocol.request import QueryTree
 
 class RunningApplication():
-    def __init__(self):
+    def __init__(self, app_name):
          self.window_id = None
-    
-    def warm_up(self, app_name):
-        self.app_name = app_name
-        self.find_window_by_name(app_name)
-        self.activate_window()
+         self.app_name = app_name
+         self.find_window_by_name(app_name)
+         self.activate_window()
 
     def activate(self):
         self.activate_window()

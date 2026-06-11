@@ -29,3 +29,37 @@ class GameStrategyController():
 
     async def is_in_match(self):
         return self.game_state_tracker.current_game_state == GameState.IN_MATCH
+
+    # New methods for Fast Path
+    async def update_strategy(self, detections: list, image_width: int):
+        """
+        Updates the current strategic intent based on object detections.
+        """
+        self.strategic_intent = None # Reset
+        
+        # Simple Ball Chasing Logic
+        ball = next((d for d in detections if d['class_name'] == 'ball'), None)
+        
+        if ball:
+            ball_x = ball['points']['x']
+            ball_center = ball_x + (ball['points']['width'] / 2)
+            screen_center = image_width / 2
+            
+            # Tolerance to avoid jitter
+            tolerance = image_width * 0.1 
+            
+            if ball_center < (screen_center - tolerance):
+                self.strategic_intent = "FAST_MOVE_LEFT"
+            elif ball_center > (screen_center + tolerance):
+                self.strategic_intent = "FAST_MOVE_RIGHT"
+            else:
+                self.strategic_intent = "FAST_SPRINT_FORWARD" # Ball is roughly in front
+        else:
+            # No ball seen? default to nothing or hold position
+             self.strategic_intent = None
+
+    def get_strategic_intent(self):
+        return getattr(self, 'strategic_intent', None)
+
+    def get_menu_state(self):
+        return self.game_state_tracker.current_menu_state
