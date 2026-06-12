@@ -667,15 +667,20 @@ screenshot sequence → executable controller commands
 
 ## 13. Model Choices
 
-### Object Detection
+### Custom Multi-Task Network (In-Match Core)
 
-Use YOLO-style models for:
+To achieve maximum efficiency and latency-tolerant state predictions without relying purely on heavy individual YOLO networks, use a custom multi-task architecture (`TacticalVisionNet` in PyTorch):
+*   **Input Branches**: Dual-branch ResNet/CNN (processing the cropped/resized main gameplay camera and the radar/minimap crop).
+*   **Task Heads**:
+    *   `possession`: Classification head (User vs Opponent vs Loose/Contested).
+    *   `zone`: Classification head (Defensive vs Middle vs Attacking third).
+    *   `ball_position`: Regression head (normalized canonical coordinates).
 
-* minimap crop
-* minimap icons
-* players
-* ball
-* HUD elements
+### Object & Keypoint Detection
+
+Use lightweight networks for auxiliary perception where necessary:
+*   minimap crop localization (deterministic crop or lightweight bounding-box regression).
+*   pitch keypoint landmarks (pose/coordinate heatmaps or lightweight ResNet keypoint regressors).
 
 ### Keypoint Detection
 
@@ -819,15 +824,12 @@ Include:
 * minimap visibility
 * crowded and uncrowded frames
 
-### Step 4: Train First Detectors
+### Step 4: Train Custom Multi-Task Model (TacticalVisionNet)
 
-Train in this order:
-
-1. minimap crop detector
-2. minimap icon detector
-3. pitch keypoint detector
-4. HUD detector
-5. main-view player/ball detector
+Implement and train the custom multi-task network:
+1.  **Dataset Preprocessing**: Collate and crop paired screenshots and minimaps from public datasets.
+2.  **Model Definition**: Define the dual-branch PyTorch model.
+3.  **Loss Function Optimization**: Train using combined Cross-Entropy (for possession and zone) and MSE loss (for ball coordinates).
 
 ### Step 5: Build State Extractor
 

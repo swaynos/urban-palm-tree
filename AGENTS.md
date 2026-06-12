@@ -26,12 +26,13 @@
 ## Repo map
 
 - `src/`: runtime application code (capture, inference handlers, strategy/controllers, game-state, IO utilities)
-- `notebooks/`: model/data experimentation pipeline for first buildout (active `01_...08_...` flow + `old/` legacy notebooks)
+- `notebooks/`: active notebook pipeline (current: `01_dataset_inventory`, `02_collate_tactical_dataset` for SAM3 auto-labeling; `03–06` deferred TVN work; `old/` legacy notebooks)
 - `tests/`: pytest suite for core runtime behaviors and utility modules
 - `PROJECT.md`: long-range project plan and architecture direction
-- `SPEC.md`: first-buildout execution spec (notebook-first training/inference/validation workflow)
-- `DATA.md`: public dataset inventory and priority ordering
+- `SPEC.md`: current buildout spec — audit + SAM 3 auto-labeling → YOLO distillation (TacticalVisionNet deferred)
+- `DATA.md`: public dataset inventory and priority ordering (reserved for future phases)
 - `artifacts/` (ignored): local training outputs, reports, predictions, and dataset extracts
+- `/Volumes/X9 Pro/Dev` (external, gitignored): ALL dataset working artifacts (frames, labels, YOLO datasets, audit reports, SAM 3 outputs)
 
 ## Architecture invariants
 
@@ -57,11 +58,20 @@ Be conservative when touching:
 - inference step chaining and decision order (`src/inference/inference_step.py`, pipeline modules)
 - config/env loading used across runtime (`src/utilities/config.py`)
 
+## NotebookLM (data-scientist workspace)
+
+The primary NotebookLM for this project is registered in the local library as **"urban-palm-tree Data Science Notebook"**:
+
+- URL: `https://notebooklm.google.com/notebook/de8dcffd-3940-4e36-9e59-5f3d2a30ff23`
+- Library ID: `urban-palm-tree-data-science-n`
+
+Use this notebook when working on: TacticalVisionNet architecture decisions, dataset curation and label schema questions, training pipeline design, tactical feature extraction approaches, and SAM 3 auto-labeling design. Query it via the `notebooklm_ask_question` tool before making significant model or data decisions.
+
 ## Extra references
 
 Read these only when relevant:
 
 - `README.md`: project overview, current setup, and contributor guidance
 - `PROJECT.md`: end-to-end tactical CV/control roadmap
-- `SPEC.md`: first buildout scope and acceptance criteria
+- `SPEC.md`: current buildout scope and acceptance criteria
 - `DATA.md`: public dataset links and intended task mapping

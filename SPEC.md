@@ -1,262 +1,189 @@
-# SPEC.md — First Buildout (Notebook-First Data + Transfer Learning Pipeline)
+# SPEC.md — Dataset Bootstrap: Audit, SAM 3 Feasibility, and Auto-Labeling Pipeline
 
-## Development Environment & Poetry Migration
+This specification defines the first executable buildout for EA FC in-match perception: **audit existing data and models**, **run feasibility spikes** (notably SAM 3 vs. existing manual labels), and from those findings produce a **truly meaningful labeled dataset** plus a **repeatable approach for adding new classes** (e.g. referee) in future iterations.
 
-### Current State
-This project is paused. It currently uses Poetry via `pyproject.toml` and `poetry.lock`, with a large ML-heavy Poetry-managed virtualenv cached outside the repository.
-
-### Resume Direction
-When work resumes, migrate the project away from Poetry and use a raw Python `venv` plus `pip` workflow instead.
-
-### Migration Requirements
-- Preserve the dependency intent from `pyproject.toml` and `poetry.lock` before removing Poetry-specific configuration.
-- Create a local virtual environment with Python `>=3.10,<3.11` unless the runtime target is deliberately changed.
-- Replace Poetry install/run instructions with direct `python -m venv`, `python -m pip install`, and plain Python command usage.
-- Prefer a `requirements.txt` or split `requirements*.txt` files if pinned dependencies are still needed.
-- Review heavy ML dependencies such as TensorFlow, Torch, Ultralytics, OpenCV, and related scientific packages before reinstalling them.
-- Do not recreate or depend on Poetry-managed virtualenvs under `~/Library/Caches/pypoetry`.
-
-### Cleanup Note
-The old Poetry cache and virtualenv are disposable and may be deleted. They should be recreated only through the new `venv` + `pip` workflow.
+**TacticalVisionNet is explicitly deferred.** The previous spec (dual-branch ResNet multi-task network) is parked until a real labeled dataset exists. Its notebooks (`03–06`) are left untouched.
 
 ---
 
-## Problem Statement
+## 0. Operating Constraints (Read First)
 
-The project has a large local corpus of EA FC gameplay screenshots (`screenshots/`) and a set of public labeled datasets (`DATA.md`), but no first-buildout execution contract for producing a high-accuracy, reusable combined recordset.
+### Storage — space is precious
+- **All dataset working artifacts** (extracted frames, normalized images, SAM 3 labels, YOLO datasets, model outputs, reports) MUST be written under: **`/Volumes/X9 Pro/Dev`**.
+- Do NOT write dataset artifacts into the repo or the system disk. The repo holds only notebooks, specs, and small reports/manifests.
 
-The immediate need is to stand up a notebook-first pipeline that transfers learning from public datasets into FC-domain predictions on local screenshots, validates those predictions automatically, and outputs a merged canonical dataset for downstream tactical modeling.
+### Source data — read-only
+- **callisto** (`sftp://callisto/media/jpswaynos/HDD1/Shared/Documents/Projects/FC24` and `.../FC26`) and **OneDrive** (`.../FC-Project`) are **audit-only**: read and inventory, never write, move, or delete.
+- The user intends to clean these repositories one day. Record observations (duplicates, junk, reorganization candidates) in a **Cleanup Notes** report — but take no destructive action.
 
-## Goals
-
-1. Establish a reproducible notebook execution flow for first-buildout dataset production.
-2. Train task-specific teacher models from public datasets (minimap crop, minimap objects, pitch keypoints, FC26 HUD/objects).
-3. Generate pseudo-label predictions for local screenshots without requiring human tagging at scale.
-4. Add an automated validation layer (including optional OpenAI validation) to increase precision before promotion.
-5. Export one combined canonical recordset with provenance and confidence metadata.
-
-## Non-Goals
-
-1. Expanding runtime/game-loop behavior in `src/` for this phase.
-2. Building final temporal tactical models or controller sequence learning.
-3. Requiring exhaustive manual annotation of local screenshots.
-4. Finalizing long-term production infrastructure (deployment/serving/CI pipelines).
-
-## Constraints
-
-### Technical
-
-- Work is notebook-first in `./notebooks/`.
-- Existing package workflow currently uses Poetry; commands below use Poetry until migration occurs.
-- `screenshots/` is treated as local working data and is not required to be committed.
-
-### Data/Quality
-
-- Project must not depend on human tagging for scaling.
-- Transfer from public datasets must be explicit and measurable.
-- Each promoted label must retain provenance: source model, confidence, and validation status.
-
-### Compatibility
-
-- Must align with roadmap and schema direction in `PROJECT.md`.
-- Must align dataset priorities in `DATA.md`.
-
-### Timeline (First Buildout)
-
-- Deliverables in this spec are scoped to first-buildout only: teacher training, screenshot inference, validation, and combined recordset creation.
-
-## Functional Requirements
-
-### FR-1: Notebook orchestration and ordering
-
-The active notebook flow must follow the numbered execution plan documented in `notebooks/README.md`.
-
-**Acceptance Criteria**
-
-1. `notebooks/README.md` lists the active ordered notebook sequence from `01_...` through `08_...`.
-2. New first-buildout work is added to the numbered sequence, not legacy notebooks.
+### Ignore list
+- `'/Users/jpswaynos/Library/CloudStorage/OneDrive-Personal/Dev/Projects/FC-Project/squad-battles detection'` — UI-element detection; noise for the early object-detection approach. Skip entirely.
 
 ---
 
-### FR-2: Public dataset inventory + class mapping
+## 1. Data & Artifact Sources to Audit
 
-A notebook stage must produce a machine-readable inventory of datasets and class mappings used for teacher training.
+| # | Source | Location | Expected content | Access |
+|---|---|---|---|---|
+| 1 | Rush screenshots | `/Users/jpswaynos/Documents/Rush/2025-02-15` | Rush playthrough stills — good for player, ball, goal/goalie | Local |
+| 2 | Rush model | `/Users/jpswaynos/Documents/Rush/fc25-rush.mk1.pt` | Trained YOLO; **classes unknown — must enumerate** | Local |
+| 3 | FC-Project archive | `/Users/jpswaynos/Library/CloudStorage/OneDrive-Personal/Dev/Projects/FC-Project` | Many screenshots + prior models WITH manual labels | OneDrive (read-only) |
+| 4 | FC-Project screenshots | `.../FC-Project/screenshots` | Bulk raw screenshots | OneDrive (read-only) |
+| 5 | Rush video | `/Volumes/X9 Pro/PS5/CREATE/Video Clips/EA SPORTS FC 25/EA SPORTS FC 25_20250222040256.mp4` | Realtime Rush playthrough — sequential frames for SAM 3 video tracking | External drive |
+| 6 | callisto FC24 | `sftp://callisto/media/jpswaynos/HDD1/Shared/Documents/Projects/FC24` | More screenshots (possibly duplicate sets) | SSH/SFTP (read-only) |
+| 7 | callisto FC26 | `sftp://callisto/media/jpswaynos/HDD1/Shared/Documents/Projects/FC26` | More screenshots (possibly duplicate sets) | SSH/SFTP (read-only) |
+| — | squad-battles detection | `.../FC-Project/squad-battles detection` | UI elements | **IGNORE** |
 
-**Acceptance Criteria**
-
-1. A file exists at `artifacts/reports/dataset_inventory.json`.
-2. Inventory includes, at minimum, entries for:
-   - FC24 Minimap Dataset
-   - FIFA Minimap Dataset
-   - Soccer Field Keypoints Detection
-   - Football Field Keypoints Dataset
-   - FC26 Roboflow Dataset
-3. Inventory records normalized internal target labels for each relevant class set.
-
----
-
-### FR-3: Teacher model training outputs
-
-Notebook stages must train (or load/fine-tune) teacher models and persist model artifacts and training summaries.
-
-**Acceptance Criteria**
-
-1. Model artifact directories exist:
-   - `artifacts/models/minimap_crop/`
-   - `artifacts/models/minimap_objects/`
-   - `artifacts/models/pitch_keypoints/`
-   - `artifacts/models/fc26_hud_objects/`
-2. Each model directory contains a run summary JSON with:
-   - model identifier/version
-   - source datasets used
-   - date/time
-   - key validation metrics (at least one metric per model)
+The audit run is expected to reach callisto via `ssh callisto` / sftp (assumes non-interactive auth works; if it does not, document as a blocker and continue with reachable sources).
 
 ---
 
-### FR-4: Screenshot inference without manual-tag dependency
+## 2. First @autonomous Run — Deliverables
 
-Notebook inference stage must run teacher models on local screenshots and generate structured prediction records.
+This run is **audit + feasibility + minimal proof-of-concept**. It does NOT build the full production dataset yet. Concrete deliverables, all written under `/Volumes/X9 Pro/Dev` (with small summary copies referenced from the repo):
 
-**Acceptance Criteria**
-
-1. Predictions file exists at `artifacts/predictions/screenshot_predictions.jsonl`.
-2. Each record contains at minimum:
-   - `frame_id`
-   - `image`
-   - `width`, `height`
-   - task predictions (where available)
-   - per-prediction `confidence`
-   - `model_name` (or equivalent provenance field)
-3. The stage runs without requiring a human-labeled local screenshot set.
-
----
-
-### FR-5: Automated validation + promotion gating
-
-Notebook validation stage must score and gate predictions for promotion into the combined recordset.
-
-**Acceptance Criteria**
-
-1. Validation report exists at `artifacts/validation/validation_report.json`.
-2. Report includes:
-   - total predictions evaluated
-   - accepted vs rejected counts
-   - rejection reasons (e.g., low confidence, structural inconsistency)
-3. If OpenAI validation is enabled, report includes an `openai_validation` summary section.
+1. **Data Inventory Report** (`audit/data_inventory.json` + readable `.md`):
+   - Per source: path, reachable (y/n), file counts by type, resolution(s), rough size, sequential-vs-stills, duplicate-set observations.
+2. **Model Inventory Report** (`audit/model_inventory.json`):
+   - For `fc25-rush.mk1.pt` and any FC-Project models: enumerate **actual class names**, base architecture, input size, and any accompanying `dataset.yaml`/label files.
+3. **Existing-Labels Inventory**:
+   - Where manual labels exist, in what format (YOLO/COCO/VOC/Label Studio), which classes, approximate instance counts per class.
+4. **SAM 3 Feasibility Spike Report** (`audit/sam3_spike.json` + `.md`):
+   - SAM 3 installability/runnability finding (deps, weights, GPU/host; SAM 3.1 considered).
+   - SAM 3 vs. existing manual labels comparison (see §4) on a sampled set.
+   - Per-class verdict: adopt SAM 3 / keep manual / hybrid / needs fine-tuning.
+5. **Minimal SAM 3 PoC**: SAM 3 run end-to-end on a small audited frame set producing YOLO-format labels for the reliable classes, saved to `/Volumes/X9 Pro/Dev/poc/`.
+6. **Cleanup Notes** (`audit/cleanup_notes.md`): observations on callisto/OneDrive for future (non-destructive) cleanup.
+7. **Proposed Class Schema** (`audit/proposed_schema.md`): the class list to commit to, derived from audit findings (see §3).
+8. **Knowledge Gaps memo** (`audit/knowledge_gaps.md`): what we still need to learn after the audit (per Goal: "what knowledge do we still need").
 
 ---
 
-### FR-6: Combined canonical recordset export
+## 3. Class Schema — Audit-Driven
 
-Notebook merge stage must output a unified canonical dataset for downstream use.
+The committed class list is **decided after the audit**, not pre-fixed. The audit enumerates which classes existing data/models already cover and where gaps are.
 
-**Acceptance Criteria**
+- **Likely core** (from Rush + FC-Project): `ball`, `player`, `user-controlled-player`, `goal`, `goalkeeper`. To be confirmed by what `fc25-rush.mk1.pt` and the manual labels actually contain.
+- **Future-add test case:** `referee`. The schema and pipeline MUST be designed so a new class can be added quickly in a later iteration (Goal 2). The `proposed_schema.md` must include an explicit "how to add a new class" procedure validated conceptually against `referee`.
+- **Label format:** YOLO normalized boxes (`class_id cx cy w h`).
 
-1. Combined recordset exists at `artifacts/combined/combined_recordset.jsonl`.
-2. Every record includes:
-   - core frame metadata (`frame_id`, `image`, dimensions)
-   - available perception sections (`minimap`, `field`, `hud`, `main_view`) with `null` allowed where unavailable
-   - provenance/quality metadata (`source_model`, `confidence`, `validation_status`)
-3. A merge summary exists at `artifacts/reports/merge_summary.json` with total merged records and section completeness stats.
+---
 
-## Verification Plan
+## 4. SAM 3 vs. Existing Labels — Comparison Protocol
 
-Run these commands from repo root.
+When existing manual labels are available for audited frames, SAM 3 is compared against them quantitatively (grounded in the SAM 3 paper's own methodology; data scientist consult 2026-06-11).
 
-1. Verify required planning/docs files:
+### 4.1 Metrics
+- **Primary: classification-gated F1 (cgF1)** = `100 × pmF1 × IL_MCC`:
+  - **pmF1** (positive micro F1): localization quality via optimal bipartite matching between SAM 3 and manual boxes, averaged over **IoU thresholds 0.50→0.95 (step 0.05)**.
+  - **IL_MCC** (image-level Matthews Correlation Coefficient): binary "is the class present in this frame" capability; robust to class imbalance.
+- **Nested boxes** (e.g. active-player marker inside a player box): use **Intersection-over-Minimum (IoM)**, threshold 0.5, for NMS instead of IoU.
+- SAM 3 predictions gated at **confidence > 0.5** to mimic downstream use.
+
+### 4.2 Interpreting disagreements fairly
+- Manual labels are imperfect. A high-confidence SAM 3 detection that the human missed is a **candidate for manual review**, NOT an automatic false positive.
+- Isolate all high-confidence disagreements (SAM FP and FN vs. manual) and produce a small visual audit set so the human can judge whether SAM 3 caught a labeling error.
+
+### 4.3 Spike sample size
+- Sample enough frames to capture **≥150–200 instances of the rarest class (ball)** for statistical significance. (50–100 frames is noise for the ball.)
+- Random sampling across sources/scenes (both teams, pitch zones, crowded/sparse).
+
+### 4.4 Decision thresholds
+- Estimate a human baseline (annotator agreement) where possible.
+- **Adopt SAM 3 for a class** if its audited cgF1 reaches **~75–80% of the human baseline** for that class.
+- Otherwise: keep manual / specialized YOLO for that class, or fine-tune SAM 3 on a small annotated set for that fine-grained concept.
+
+### 4.5 Per-class breakdown (decoupled adoption)
+- Evaluate strictly **per class**. Expected pattern: SAM 3 strong on `player`/`goalkeeper`; weaker zero-shot on `ball` (small) and `user-controlled-player` (UI-indicator, fine-grained).
+- `user-controlled-player` evaluated via **visual exemplar prompting** (exemplar crop of the active-player indicator), not text.
+- Outcome is a **hybrid adoption map**: SAM 3 for classes where cgF1 clears threshold; manual/YOLO/fine-tune for the rest.
+
+---
+
+## 5. Pipeline Design (Post-Audit, Forward-Looking)
+
+The production pipeline is shaped by audit findings; this is the intended design.
+
+1. **SAM 3 PCS** as primary labeler for adopted classes: text prompts for base classes, visual exemplar for `user-controlled-player`.
+2. **SAM 3 video tracking** (memory bank, masklet propagation + suppression) on sequential sources (Rush video #5) for temporal consistency and missed-object recovery. No separate ByteTrack needed.
+3. **Existing manual labels reused** for classes where they beat SAM 3.
+4. **VLM fallback only** (SAM 3 Agent, Set-of-Marks on full uncropped image — never crops) for fine-grained classes SAM 3 can't isolate.
+5. **YOLO student distillation** (`yolo11m`, reuse `src/inference/yolo_object_detector.py` + `parse_rush_model_results`) trained on the combined label set.
+6. **Extensibility:** adding a class = define prompt/exemplar (or small fine-tune set) + extend schema + re-run labeling for that class. Documented procedure validated against `referee`.
+
+---
+
+## 6. Eval & Quality
+
+- **Eval set:** small, hand-verified, **rotated** each cycle to avoid eval-set overfitting/leakage. Sized to capture ≥150 ball instances for meaningful ball metrics.
+- **Metrics:** mAP@0.5 overall + per-class AP/recall; ball recall tracked as a trend (high variance at small N).
+- **Provenance:** every training label carries source (`sam3_pcs` / `manual` / `fine_tuned` / `yolo`). No human relabeling at scale; manual labels are reused-as-found, not regenerated.
+
+---
+
+## 7. Verification (First Run)
 
 ```bash
-ls PROJECT.md DATA.md SPEC.md notebooks/README.md
+# All artifacts land on the external drive
+test -d "/Volumes/X9 Pro/Dev"
+
+# Audit outputs exist
+ls "/Volumes/X9 Pro/Dev/audit/data_inventory.json"
+ls "/Volumes/X9 Pro/Dev/audit/model_inventory.json"
+ls "/Volumes/X9 Pro/Dev/audit/sam3_spike.json"
+ls "/Volumes/X9 Pro/Dev/audit/proposed_schema.md"
+ls "/Volumes/X9 Pro/Dev/audit/knowledge_gaps.md"
+ls "/Volumes/X9 Pro/Dev/audit/cleanup_notes.md"
+
+# fc25-rush model class list was enumerated (non-empty)
+test -s "/Volumes/X9 Pro/Dev/audit/model_inventory.json"
+
+# Minimal SAM 3 PoC produced YOLO labels
+ls "/Volumes/X9 Pro/Dev/poc/"
 ```
 
-2. Execute dataset inventory notebook:
+---
 
-```bash
-poetry run jupyter nbconvert --to notebook --execute "notebooks/01_dataset_inventory.ipynb" --output "01_dataset_inventory.executed.ipynb" --output-dir "artifacts/reports"
-```
+## 8. Acceptance Criteria (First Run)
 
-3. Execute teacher training notebooks:
+### AC-1: Audit completeness
+- Every source in §1 is either inventoried or explicitly recorded as unreachable with reason. The ignore-listed path is skipped.
 
-```bash
-poetry run jupyter nbconvert --to notebook --execute "notebooks/02_train_minimap_crop_teacher.ipynb" --output "02_train_minimap_crop_teacher.executed.ipynb" --output-dir "artifacts/reports"
-poetry run jupyter nbconvert --to notebook --execute "notebooks/03_train_minimap_objects_teacher.ipynb" --output "03_train_minimap_objects_teacher.executed.ipynb" --output-dir "artifacts/reports"
-poetry run jupyter nbconvert --to notebook --execute "notebooks/04_train_pitch_keypoints_teacher.ipynb" --output "04_train_pitch_keypoints_teacher.executed.ipynb" --output-dir "artifacts/reports"
-poetry run jupyter nbconvert --to notebook --execute "notebooks/05_train_fc26_hud_objects_teacher.ipynb" --output "05_train_fc26_hud_objects_teacher.executed.ipynb" --output-dir "artifacts/reports"
-```
+### AC-2: Model class enumeration
+- `fc25-rush.mk1.pt` actual class names are listed. Any FC-Project model's classes and label formats are listed.
 
-4. Execute inference, validation, and merge notebooks:
+### AC-3: SAM 3 feasibility verdict
+- A clear installable/runnable finding for SAM 3 (or SAM 3.1) on this hardware.
+- Per-class cgF1 comparison against existing manual labels (where labels exist), using §4 metrics, with a per-class adoption verdict.
 
-```bash
-poetry run jupyter nbconvert --to notebook --execute "notebooks/06_infer_screenshots.ipynb" --output "06_infer_screenshots.executed.ipynb" --output-dir "artifacts/reports"
-poetry run jupyter nbconvert --to notebook --execute "notebooks/07_validate_predictions.ipynb" --output "07_validate_predictions.executed.ipynb" --output-dir "artifacts/reports"
-poetry run jupyter nbconvert --to notebook --execute "notebooks/08_build_combined_recordset.ipynb" --output "08_build_combined_recordset.executed.ipynb" --output-dir "artifacts/reports"
-```
+### AC-4: Minimal PoC
+- SAM 3 runs end-to-end on ≥1 audited sequence/frame set and emits YOLO-format labels for at least the reliable base classes, saved under `/Volumes/X9 Pro/Dev/poc/`.
 
-5. Verify expected artifacts exist:
+### AC-5: Decisions enabled
+- `proposed_schema.md` commits a class list with rationale.
+- `knowledge_gaps.md` states what remains unknown and what the next run should do.
+- Extensibility procedure ("add a class like referee") is documented.
 
-```bash
-ls artifacts/reports/dataset_inventory.json artifacts/validation/validation_report.json artifacts/combined/combined_recordset.jsonl artifacts/reports/merge_summary.json
-ls artifacts/models/minimap_crop artifacts/models/minimap_objects artifacts/models/pitch_keypoints artifacts/models/fc26_hud_objects
-```
+### AC-6: Constraints honored
+- No writes outside `/Volumes/X9 Pro/Dev` for dataset artifacts (repo gets only small summaries/manifests).
+- No writes/moves/deletes on callisto or OneDrive. Cleanup observations captured as notes only.
 
-## Detailed Implementation Plan (Checklist)
+---
 
-### A. Spec + notebook coordination
+## 9. Open Dependencies & Risks
 
-- [ ] Confirm `SPEC.md` and `PROJECT.md` are aligned on first-buildout scope.
-- [ ] Keep active execution order in `notebooks/README.md` as the coordination source.
+| Item | Status | Notes |
+|---|---|---|
+| SAM 3 / SAM 3.1 install | Unverified | Weights, deps, GPU/host. Resolve in spike. Repo: `facebookresearch/sam3` (inference + finetune + checkpoints). |
+| `ssh callisto` non-interactive | Unverified | If auth blocks, document and proceed with reachable sources. |
+| External drive mounted | Required | `/Volumes/X9 Pro` must be mounted for both source #5 and all output. |
+| `fc25-rush.mk1.pt` classes | Unknown | Core reason for the model audit. |
+| Manual label formats vary | Likely | FC-Project may mix YOLO/COCO/Label Studio; inventory must normalize understanding before comparison. |
+| Domain gap (SAM 3 real→rendered game) | Medium | Measured by the spike; fine-tune on small annotated set if a class underperforms. |
+| `user-controlled-player` via exemplar | Medium-High | Make-or-break for that class; VLM Set-of-Marks fallback or small fine-tune if exemplar fails. |
+| Duplicate sets across callisto/OneDrive | Likely | Note for dedup during dataset assembly + future cleanup. |
 
-### B. Notebook scaffolding and shared conventions
+---
 
-- [ ] Add a standard config cell in each active notebook (paths, run_id, seed, thresholds).
-- [ ] Standardize artifact output paths under `artifacts/models`, `artifacts/predictions`, `artifacts/validation`, `artifacts/combined`, and `artifacts/reports`.
-- [ ] Add end-of-notebook run summary output (JSON) for each stage.
-
-### C. Dataset inventory + mapping
-
-- [ ] Implement dataset inventory notebook to produce `artifacts/reports/dataset_inventory.json`.
-- [ ] Define normalized label mappings from public datasets to canonical internal labels.
-
-### D. Teacher training stages
-
-- [ ] Implement minimap crop teacher training notebook output + metrics summary.
-- [ ] Implement minimap object teacher training notebook output + metrics summary.
-- [ ] Implement pitch keypoint teacher training notebook output + metrics summary.
-- [ ] Implement FC26 HUD/object teacher training notebook output + metrics summary.
-
-### E. Screenshot inference stage
-
-- [ ] Implement screenshot inference notebook to read local `screenshots/*.jpg` and emit `artifacts/predictions/screenshot_predictions.jsonl`.
-- [ ] Include per-prediction provenance + confidence metadata.
-
-### F. Validation + gating
-
-- [ ] Implement deterministic validation checks (schema, geometry, threshold gates).
-- [ ] Implement optional OpenAI validation pass for uncertain/ambiguous predictions.
-- [ ] Emit `artifacts/validation/validation_report.json` with acceptance/rejection accounting.
-
-### G. Combined recordset build
-
-- [ ] Merge validated outputs into canonical records with nullable sections.
-- [ ] Emit `artifacts/combined/combined_recordset.jsonl`.
-- [ ] Emit `artifacts/reports/merge_summary.json` with completeness and provenance stats.
-
-### H. Final review for first buildout
-
-- [ ] Confirm all acceptance criteria are met via verification commands.
-- [ ] Document first-buildout quality baseline metrics and next-iteration priorities.
-
-## Key Assumptions
-
-1. Local `screenshots/` contains sufficient FC gameplay diversity for domain adaptation.
-2. Public dataset labels are reliable enough to bootstrap strong teacher models.
-3. Notebook execution is the intended delivery mechanism for first buildout.
-4. Poetry remains the temporary command runner until migration.
-
-## Open Risks
-
-1. Domain shift between public datasets and local FC screenshots may reduce early precision.
-2. OpenAI validation can improve quality but may add cost/latency and requires careful prompting/guardrails.
-3. Inconsistent label semantics across source datasets can introduce merge noise if mappings are not strict.
-4. Notebook drift (ad hoc edits) can hurt reproducibility unless output conventions are enforced.
+## 10. Change Log
+- 2026-06-11 — Rewrote spec around audit + SAM 3 feasibility as the first @autonomous run. Added data/model source inventory, `/Volumes/X9 Pro/Dev` storage constraint, read-only callisto/OneDrive policy, cgF1-based SAM3-vs-manual comparison protocol, audit-driven schema, and class-extensibility goal (referee). Superseded the TacticalVisionNet-first spec (deferred).
